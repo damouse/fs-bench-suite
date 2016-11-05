@@ -74,6 +74,14 @@ Note that apache caching is turned off with the following:
   </ifModule>
 </filesMatch>
 
+On windows you'll have to a) map the drive to the webserver b) make the webserver allow all requests.
+
+In Apache/conf/httpd.conf: 
+
+    DocumentRoot "E:/"
+
+Also change the permissions on the root directory element from "Require all denied" to "Require all granted"
+
 
 ## Compilation
 

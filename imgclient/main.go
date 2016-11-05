@@ -75,7 +75,7 @@ func Output(clients, requests int, res chan *Result, unique bool, fname string) 
 		isUnique = "shared"
 	}
 
-	f, err := os.Create(fmt.Sprintf("%s/%dc-%dr-%s", fname, clients, requests, isUnique))
+	f, err := os.Create(fmt.Sprintf("%s%dc-%dr-%s", fname, clients, requests, isUnique))
 	checkerr(err)
 
 	for r := range res {

@@ -1,154 +1,133 @@
-import matplotlib.pyplot as plot
-import os
-import pylab
+def graph_test():
+    import numpy as np
+
+    with open('results/ext4/go-pg/10c-1000r', 'r') as f:
+        lines = [x.split(',') for x in f.readlines()]
+
+    sorted(lines, key=lambda x: x[1])
+    start = int(lines[0][1])
+    end = int(lines[-1][1])
+
+    maxDuration = int(max(lines, key=lambda x: int(x[3]))[3])
+
+    times = [int(x[1]) - start for x in lines]
+    latency = [int(x[3]) for x in lines]
+    data = latency
+
+    values, base = np.histogram(data, bins=100)
+    cumulative = np.cumsum(values)
+    plot.plot(base[:-1], cumulative, c='blue')
+
+    plot.show()
 
 
-outputDir = os.getcwd() + "/results/"
+def samples():
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from math import ceil, floor, sqrt
 
+    with open('results/ext4/go-pg/10c-1000r', 'r') as f:
+        lines = [x.split(',') for x in f.readlines()]
 
-def graph(peers, links, groups, tasks, duration):
-    test(peers)
+    sorted(lines, key=lambda x: x[1])
+    start = int(lines[0][1])
+    end = int(lines[-1][1])
 
+    maxDuration = int(max(lines, key=lambda x: int(x[3]))[3])
 
-def graphAllPeers(peers):
-    for peer in peers:
-        plot.plot(peer.throughput)
+    times = [int(x[1]) - start for x in lines]
+    data = [int(x[3]) for x in lines]
 
-    plot.ylabel('Throuput (bytes)')
-    plot.xlabel('Time (10s of ms)')
-    plot.savefig(outputDir + 'peerThroughput.png')
+    def pdf(x, mu=0, sigma=1):
+        """
+        Calculates the normal distribution's probability density 
+        function (PDF).  
 
+        """
+        term1 = 1.0 / (sqrt(2 * np.pi) * sigma)
+        term2 = np.exp(-0.5 * ((x - mu) / sigma)**2)
+        return term1 * term2
 
-def plotThrouput(stats):
-    lresults, lines = [], []
-    for test in stats:
-        sumT = 0
-        for i in range(0, len(stats[0].peers[0].throughput)):
-            for peer in test.peers:
-                sumT += peer.throughput[i]
+    # Drawing sample date poi
+    ##################################################
 
-            test.average.append(sumT / len(test.peers))
-            sumT = 0
+    # Random Gaussian data (mean=0, stdev=5)
+    # data1 = np.random.normal(loc=0, scale=5.0, size=30)
+    # data2 = np.random.normal(loc=2, scale=7.0, size=30)
 
-    for test in stats:
-        addedPlot, = plot.plot(toKB(test.average), label="Peers, N=" + str(test.num))
-        lines.append(addedPlot)
+    data1 = data
+    data2 = data
 
-    pylab.legend(loc='best')
-    plot.legend(handles=lines)
-    plot.ylabel('Throuput (KB)')
-    plot.xlabel('Time (100s of ms)')
+    data1.sort(), data2.sort()
+    print data1
 
-    axe = plot.subplot(111)
-    axe.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=2, fancybox=True, shadow=True)
+    min_val = floor(min(data1 + data2))
+    max_val = ceil(max(data1 + data2))
 
-    plot.savefig(outputDir + 'avg_throughput_peers.png')
-    plot.clf()
+    min_val = min(data1)
 
+    ##################################################
 
-def toKB(values):
-    return [x / 1024 for x in values]
+    fig = plt.gcf()
+    fig.set_size_inches(12, 11)
 
+    # # Cumulative distributions, stepwise:
+    # plt.subplot(2, 2, 1)
+    # plt.step(np.concatenate([data1, data1[[-1]]]), np.arange(data1.size + 1), label='$\mu=0, \sigma=5$')
+    # plt.step(np.concatenate([data2, data2[[-1]]]), np.arange(data2.size + 1), label='$\mu=2, \sigma=7$')
 
-def plotTraditionalAverage(stats):
-    lines = []
+    # plt.title('30 samples from a random Gaussian distribution (cumulative)')
+    # plt.ylabel('Count')
+    # plt.xlabel('X-value')
+    # plt.legend(loc='upper left')
+    # plt.xlim([min_val, max_val])
+    # plt.ylim([0, data1.size + 1])
+    # plt.grid()
 
-    for test in stats:
-        sumClients = 0
-        server = [x for x in test.peers if x.server][0]
-        peers = [x for x in test.peers if not x.server]
+    # # Cumulative distributions, smooth:
+    # plt.subplot(2, 2, 2)
 
-        for i in range(0, len(stats[0].peers[0].throughput)):
-            for peer in peers:
-                sumClients += peer.throughput[i]
+    # plt.plot(np.concatenate([data1, data1[[-1]]]), np.arange(data1.size + 1), label='$\mu=0, \sigma=5$')
+    # plt.plot(np.concatenate([data2, data2[[-1]]]), np.arange(data2.size + 1), label='$\mu=2, \sigma=7$')
 
-            test.average.append(sumClients / len(test.peers))
-            sumClients = 0
+    # plt.title('30 samples from a random Gaussian (cumulative)')
+    # plt.ylabel('Count')
+    # plt.xlabel('X-value')
+    # plt.legend(loc='upper left')
+    # plt.xlim([min_val, max_val])
+    # plt.ylim([0, data1.size + 1])
+    # plt.grid()
 
-        addedPlot, = plot.plot(toKB(test.average), label="Clients, N=" + str(test.num))
-        lines.append(addedPlot)
-        addedPlot, = plot.plot(toKB(server.throughput), label="Server, N=" + str(test.num))
-        lines.append(addedPlot)
+    # Probability densities of the sample points function
+    plt.subplot(2, 2, 3)
 
-    pylab.legend(loc='best')
-    plot.legend(handles=lines)
-    plot.ylabel('Throuput (KB)')
-    plot.xlabel('Time (100s of ms)')
+    pdf1 = pdf(data1, mu=0, sigma=5)
+    pdf2 = pdf(data2, mu=2, sigma=7)
+    plt.plot(data1, pdf1, label='$\mu=0, \sigma=5$')
+    plt.plot(data2, pdf2, label='$\mu=2, \sigma=7$')
 
-    axe = plot.subplot(111)
-    axe.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=2, fancybox=True, shadow=True)
+    plt.title('30 samples from a random Gaussian')
+    plt.legend(loc='upper left')
+    plt.xlabel('X-value')
+    plt.ylabel('probability density')
+    plt.xlim([min_val, max_val])
+    plt.grid()
 
-    plot.savefig(outputDir + 'avg_throughput_traditional.png')
-    plot.clf()
+    # Probability density function
+    plt.subplot(2, 2, 4)
 
+    x = np.arange(min_val, max_val, 0.05)
 
-def toKB(values):
-    return [x / 1024 for x in values]
+    pdf1 = pdf(x, mu=0, sigma=5)
+    pdf2 = pdf(x, mu=2, sigma=7)
+    plt.plot(x, pdf1, label='$\mu=0, \sigma=5$')
+    plt.plot(x, pdf2, label='$\mu=2, \sigma=7$')
 
+    plt.title('PDFs of Gaussian distributions')
+    plt.legend(loc='upper left')
+    plt.xlabel('X-value')
+    plt.ylabel('probability density')
+    plt.xlim([min_val, max_val])
+    plt.grid()
 
-def plotMulticastThroughput(stats):
-    lresults, lines = [], []
-    for test in stats:
-        sumT = 0
-        for i in range(0, len(stats[0].peers[0].throughput)):
-            for peer in test.peers:
-                sumT += peer.throughput[i]
-
-            test.average.append(sumT / len(test.peers))
-            sumT = 0
-
-    for test in stats:
-        addedPlot, = plot.plot(toKB(test.average), label="N=" + str(test.num) + " M=" + str(test.connectivity))
-        lines.append(addedPlot)
-
-    pylab.legend(loc='best')
-    plot.legend(handles=lines)
-    plot.ylabel('Throuput (KB)')
-    plot.xlabel('Time (100s of ms)')
-
-    axe = plot.subplot(111)
-    axe.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=2, fancybox=True, shadow=True)
-
-    plot.savefig(outputDir + 'avg_throughput_aoi_peers.png')
-    plot.clf()
-
-
-def plotLatency(stats):
-    ignore = 1000  # ignore the last chunk of time, its incorrect
-    maxTime = max(stats[0].tasks, key=lambda x: x.startTime).startTime - 1000
-    results, lines = [], []
-
-    for test in stats:
-        latency = {}
-        time, averageLat = [], []
-
-        for task in test.tasks:
-            if not task.startTime in latency:
-                latency[task.startTime] = []
-            latency[task.startTime].append(task.time)
-
-        for key in sorted(latency.keys()):
-            if key >= maxTime:
-                continue
-            total = 0.0
-            for x in latency[key]:
-                total += x
-            averageLat.append(total / len(latency[key]))
-            time.append(key / 100)
-
-        if test.comment != None:
-            addedPlot, = plot.plot(time, averageLat, label="CSA, N=" + str(test.num))
-        else:
-            addedPlot, = plot.plot(time, averageLat, label="N=" + str(test.num) + " M=" + str(test.connectivity))
-        lines.append(addedPlot)
-
-    pylab.legend(loc='best')
-    plot.legend(handles=lines)
-    plot.ylabel('Latency (ms)')
-    plot.xlabel('Time (100s of ms)')
-
-    axe = plot.subplot(111)
-    axe.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=2, fancybox=True, shadow=True)
-
-    plot.savefig(outputDir + 'avg_latency_peers.png')
-    plot.clf()
+    plt.show()
