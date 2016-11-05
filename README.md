@@ -1,5 +1,7 @@
 # Filesystem Comparison Benchmarks
 
+
+
 - Compilation
     + Golang
     + Apache
@@ -13,6 +15,8 @@
 
 ## Setup 
 
+Commands written here are not meant to be instructive; this isn't a tutorial. They're a history of the steps @damouse carried out to set up the tests. 
+
 ### zfs
 
 See here for all the information you could want to know about setting up zfs: https://pthree.org/2012/12/04/zfs-administration-part-i-vdevs/
@@ -23,7 +27,7 @@ Install zfs:
 
 To use a disk: 
 
-    sudo fdisk -l
+    sudo zpool create fsb sda -f
 
 To use a file:
 
@@ -37,7 +41,7 @@ Create a pool from files:
 
 Destroy a pool:
 
-    zpool destroy tank
+    zpool destroy fsb
 
 
 ### pg

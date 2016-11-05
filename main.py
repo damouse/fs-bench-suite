@@ -8,7 +8,7 @@ import matplotlib.pyplot as plot
 import pylab
 
 # The filesystem currently being tested
-FS_UNDER_TEST = 'ntfs'
+FS_UNDER_TEST = 'zfs'
 
 GO_PATH = '/usr/local/go/'
 WORKING_DIR = '/media/damouse/fsb/scratch'
@@ -17,6 +17,10 @@ IMAGE_DIR = WORKING_DIR.replace('scratch', 'images')
 if FS_UNDER_TEST == 'ntfs':
     GO_PATH = 'C:/bin/go'
     WORKING_DIR = 'E:/scratch'
+    IMAGE_DIR = WORKING_DIR.replace('scratch', 'images')
+
+if FS_UNDER_TEST == 'zfs':
+    WORKING_DIR = '/fsb/scratch'
     IMAGE_DIR = WORKING_DIR.replace('scratch', 'images')
 
 RESULTS_PATH = 'results/' + FS_UNDER_TEST
@@ -30,13 +34,17 @@ IMG_PARAMS = [(1, 10), (1, 100), (1, 1000), (10, 10), (10, 100), (10, 1000)]
 
 def compilation_test():
     # Copy the go source tree
-    # cleardir(WORKING_DIR)
-    # shutil.copytree('go', WORKING_DIR + '/go')
+    cleardir(WORKING_DIR)
+    shutil.copytree('scratch/go', WORKING_DIR + '/go')
     os.environ['GOROOT_BOOTSTRAP'] = GO_PATH
-    print "cd %s/go/src; ./make.bat" % WORKING_DIR
 
     start = time.time()
-    subprocess.call("cd %s/go/src; ./make.bat" % WORKING_DIR, shell=True)
+
+    if FS_UNDER_TEST == "ntfs":
+        subprocess.call("cd %s/go/src; ./make.bat" % WORKING_DIR, shell=True)
+    else:
+        subprocess.call("cd %s/go/src && ./make.bash" % WORKING_DIR, shell=True)
+
     end = time.time()
 
     with open(RESULTS_PATH + '/compilation.txt', 'w') as f:
