@@ -40,12 +40,26 @@ Destroy a pool:
     zpool destroy tank
 
 
+### pg
+
+Find installtion instructions for postgres online. Once installed, you need to change the data directory for the postgres database.
+
+    sudo systemctl stop postgresql
+    sudo mv postgresql postgresql.bak
+    sudo cp -aRv /var/lib/postgresql/ /media/damouse/fsb/
+    ln -s /media/damouse/fsb/postgresql/ postgresql
+    sudo chown postgres /var/lib/postgresql
+    sudo systemctl start postgresql
+
+
+
 ## Compilation
 
 Download go source:
 
     git clone git@github.com:golang/go.git
-    export GOROOT_BOOTSTRAP=$(which go)
+    # export GOROOT_BOOTSTRAP=$(which go)
+    export GOROOT_BOOTSTRAP=/usr/local/go/
     ./src/all.bash
 
 

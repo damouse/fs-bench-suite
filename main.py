@@ -7,37 +7,46 @@ import glob
 import matplotlib.pyplot as plot
 import pylab
 
+# Used for downloads, temporary files, etc
+WORKING_DIR = '/media/damouse/fsb/scratch'
+SCRATCH_DIR = 'scratch'
+
 # The filesystem currently being tested
 FS_UNDER_TEST = 'ext4'
 
 RESULTS_PATH = 'results/' + FS_UNDER_TEST
 
-GO_PATH = '/home/damouse/.gvm/gos/go1.6'
-GOPG_RESULTS_PATH = RESULTS_PATH + '/go-pg/'
+# Used to compile the go version
+GO_PATH = '/usr/local/go/'
 
-# Used for downloads, temporary files, etc
-WORKING_DIR = 'scratch'
+GOPG_RESULTS_PATH = RESULTS_PATH + '/go-pg/'
 
 # Each tuple here is a test. Format is (#clients, #requests)
 GOPG_PARAMS = [(1, 10), (1, 100), (1, 1000), (10, 10), (10, 100), (10, 1000)]
 # GOPG_PARAMS = [(1, 10), (1, 100)]
 
+
 def compilation_test():
     # Copy the go source tree
-    cleardir('ext4')
-    shutil.copytree(WORKING_DIR + '/go', WORKING_DIR + '/ext4/go')
+    cleardir(WORKING_DIR)
+    shutil.copytree(SCRATCH_DIR + '/go', WORKING_DIR + '/go')
     os.environ['GOROOT_BOOTSTRAP'] = GO_PATH
 
     start = time.time()
-    subprocess.call("cd %s/ext4/go/src; ./all.bash" % WORKING_DIR, shell=True)
+    subprocess.call("cd %s/go/src; ./make.bash" % WORKING_DIR, shell=True)
     end = time.time()
 
+    with open(RESULTS_PATH + '/compilation.txt', 'w') as f:
+        f.write(str(end - start))
+
     print "Done. Time: ", end - start, 'seconds'
+
 
 def webserver_test():
     cleardir(GOPG_RESULTS_PATH)
     [subprocess.call("go run goserver/*.go %s %s %s" % (x, y, GOPG_RESULTS_PATH), shell=True) for x, y in GOPG_PARAMS]
     graph_go_pg()
+
 
 def graph_go_pg():
     ''' Read every csv output from goserver and graph the results '''
@@ -56,12 +65,13 @@ def graph_go_pg():
         latency = [int(x[3]) for x in lines]
 
         plot.scatter(times, latency, label="N=" + " M=")
-        plot.axis([-1000, (end - start) *1.1, 0, maxDuration * 1.1])
+        plot.axis([-1000, (end - start) * 1.1, 0, maxDuration * 1.1])
         plot.ylabel('Latency (us)')
         plot.xlabel('Request Send Time (us from start)')
 
         plot.savefig(name + '.png')
         plot.clf()
+
 
 def cleardir(d):
     ''' Destroy and remake the target directory '''
@@ -72,6 +82,4 @@ def cleardir(d):
 
 if __name__ == '__main__':
     compilation_test()
-    webserver_test()
-
-
+    # webserver_test()
