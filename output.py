@@ -25,13 +25,12 @@ class ResultRow():
         self.raw = raw
         split = [x for x in raw.split(',')]
 
-        self.client_num = int(split[0])
-        self.start_time = int(split[1])
-        self.end_time = int(split[2])
-        self.diff_time = int(split[3])
+        self.client_num = float(split[0])
+        self.start_time = float(split[1])
+        self.end_time = float(split[2])
+        self.diff_time = float(split[3])
 
         if CONVERT_MS:
-            self.client_num = self.client_num / 1000
             self.start_time = self.start_time / 1000
             self.end_time = self.end_time / 1000
             self.diff_time = self.diff_time / 1000
@@ -63,10 +62,13 @@ class TestResults():
         self.max_value = max(self.lines, key=lambda x: x.diff_time).diff_time
         self.min_value = min(self.lines, key=lambda x: x.diff_time).diff_time
 
+        print self.start
+        print self.lines[-1].raw
+
 
 def load_data():
     # return [TestResults('ntfs', 'apache', 'results/ntfs/apache/10c-10r-shared')]
-    # return [TestResults('ntfs', 'apache', 'results/ntfs/apache/10c-1000r-shared')]
+
     return [TestResults(fs, test, file)
             for test in ['apache', 'go-pg']
             for fs in ['ntfs', 'ext4', 'zfs']
@@ -75,10 +77,13 @@ def load_data():
 
 # Scatter plots
 def latency_scatter(result, output_subfolder=None):
-    x, y = [x.start_time - result.start for x in result.lines], [x.diff_time for x in result.lines]
+    time = [x.start_time - result.start for x in result.lines]
+    lat = [x.diff_time for x in result.lines]
 
-    plot.scatter(x, y, label="N=" + " M=")
-    plot.axis([0, (result.end - result.start) * 1.1, 0, result.max_value * 1.1])
+    plot.scatter(time, lat, label="N=" + " M=")
+    plot.xlim([0, result.end - result.start])
+    plot.ylim([0, result.max_value])
+
     plot.ylabel('Latency (ms)')
     plot.xlabel('Request Send Time (ms from start)')
 
