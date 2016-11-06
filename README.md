@@ -84,6 +84,11 @@ Download go source:
     export GOROOT_BOOTSTRAP=/usr/local/go/
     ./src/all.bash
 
+Or for windows:
+
+    SET GOROOT_BOOTSTRAP=C:\Go
+
+The windows compilation test was also tested using the built in Measure-Command utility.
 
 ## Webserver
 
@@ -110,3 +115,12 @@ What do we need here?
 - Webserver test
 - Install databases (mongo is already up, right?)
 - Setup webserver
+
+## Conditions
+
+Tested on:
+
+- i7 6700k (8 threads@4.2gHz, 8MB)
+- 32GB DDR4
+- SM951 Nvme 512GB (system drive)
+- WD 500GB HDD (testing drive)

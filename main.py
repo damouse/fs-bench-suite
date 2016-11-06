@@ -7,16 +7,17 @@ import glob
 import matplotlib.pyplot as plot
 import pylab
 
-# Used to compile the go version
-GO_PATH = '/usr/local/go/'
-
 # The filesystem currently being tested
-FS_UNDER_TEST = 'ext4'
+FS_UNDER_TEST = 'ntfs'
 
-# Used for downloads, temporary files, etc
+GO_PATH = '/usr/local/go/'
 WORKING_DIR = '/media/damouse/fsb/scratch'
 IMAGE_DIR = WORKING_DIR.replace('scratch', 'images')
-SCRATCH_DIR = 'scratch'
+
+if FS_UNDER_TEST == 'ntfs':
+    GO_PATH = 'C:/bin/go'
+    WORKING_DIR = 'E:/scratch'
+    IMAGE_DIR = WORKING_DIR.replace('scratch', 'images')
 
 RESULTS_PATH = 'results/' + FS_UNDER_TEST
 GOPG_RESULTS_PATH = RESULTS_PATH + '/go-pg/'
@@ -29,12 +30,13 @@ IMG_PARAMS = [(1, 10), (1, 100), (1, 1000), (10, 10), (10, 100), (10, 1000)]
 
 def compilation_test():
     # Copy the go source tree
-    cleardir(WORKING_DIR)
-    shutil.copytree(SCRATCH_DIR + '/go', WORKING_DIR + '/go')
+    # cleardir(WORKING_DIR)
+    # shutil.copytree('go', WORKING_DIR + '/go')
     os.environ['GOROOT_BOOTSTRAP'] = GO_PATH
+    print "cd %s/go/src; ./make.bat" % WORKING_DIR
 
     start = time.time()
-    subprocess.call("cd %s/go/src; ./make.bash" % WORKING_DIR, shell=True)
+    subprocess.call("cd %s/go/src; ./make.bat" % WORKING_DIR, shell=True)
     end = time.time()
 
     with open(RESULTS_PATH + '/compilation.txt', 'w') as f:
@@ -45,7 +47,12 @@ def compilation_test():
 
 def webserver_test():
     cleardir(GOPG_RESULTS_PATH)
-    [subprocess.call("go run goserver/*.go %s %s %s" % (x, y, GOPG_RESULTS_PATH), shell=True) for x, y in GOPG_PARAMS]
+
+    if FS_UNDER_TEST == 'ntfs':
+        [subprocess.call("(go build .\goserver\) -and (.\goserver.exe %s %s %s)" % (x, y, GOPG_RESULTS_PATH), shell=True) for x, y in GOPG_PARAMS]
+    else:
+        [subprocess.call("go run goserver/*.go %s %s %s" % (x, y, GOPG_RESULTS_PATH), shell=True) for x, y in GOPG_PARAMS]
+
     graph_go_pg()
 
 
@@ -57,8 +64,12 @@ def imgserver_test():
     [shutil.copy('1.jpg', os.path.join(IMAGE_DIR, str(x) + '.jpg')) for x in range(copies)]
 
     for x, y in IMG_PARAMS:
-        subprocess.call("go run imgclient/*.go %s %s true %s" % (x, y, IMGSERVER_RESULTS_PATH), shell=True)
-        subprocess.call("go run imgclient/*.go %s %s false %s" % (x, y, IMGSERVER_RESULTS_PATH), shell=True)
+        if FS_UNDER_TEST == 'ntfs':
+            subprocess.call("(go build .\imgclient\) -and (.\imgclient.exe 1 1 1 1) %s %s true %s" % (x, y, IMGSERVER_RESULTS_PATH), shell=True)
+            subprocess.call("(go build .\imgclient\) -and (.\imgclient.exe 1 1 1 1) %s %s false %s" % (x, y, IMGSERVER_RESULTS_PATH), shell=True)
+        else:
+            subprocess.call("go run imgclient/*.go %s %s true %s" % (x, y, IMGSERVER_RESULTS_PATH), shell=True)
+            subprocess.call("go run imgclient/*.go %s %s false %s" % (x, y, IMGSERVER_RESULTS_PATH), shell=True)
 
     graph_apache()
 
@@ -256,8 +267,8 @@ def samples():
 
 if __name__ == '__main__':
     # compilation_test()
-    # webserver_test()
+    webserver_test()
     # imgserver_test()
     # graph_test()
 
-    samples()
+    # samples()
