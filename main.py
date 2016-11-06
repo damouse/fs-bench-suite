@@ -49,7 +49,8 @@ def webserver_test():
     cleardir(GOPG_RESULTS_PATH)
 
     if FS_UNDER_TEST == 'ntfs':
-        [subprocess.call("(go build .\goserver\) -and (.\goserver.exe %s %s %s)" % (x, y, GOPG_RESULTS_PATH), shell=True) for x, y in GOPG_PARAMS]
+        subprocess.call("go build goserver", shell=True)
+        [subprocess.call(".\goserver.exe %s %s %s" % (x, y, GOPG_RESULTS_PATH), shell=True) for x, y in GOPG_PARAMS]
     else:
         [subprocess.call("go run goserver/*.go %s %s %s" % (x, y, GOPG_RESULTS_PATH), shell=True) for x, y in GOPG_PARAMS]
 

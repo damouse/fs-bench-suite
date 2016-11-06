@@ -69,7 +69,7 @@ func RunTest(clients int, requests int) chan *Result {
 
 // Write out results as csv. Each line has the form: clientID,start,end,duration,type
 func Output(clients, requests int, res chan *Result, fname string) {
-	f, err := os.Create(fmt.Sprintf("%s/%dc-%dr", fname, clients, requests))
+	f, err := os.Create(fmt.Sprintf("%s%dc-%dr", fname, clients, requests))
 	checkerr(err)
 
 	for r := range res {
