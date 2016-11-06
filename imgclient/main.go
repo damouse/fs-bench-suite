@@ -10,7 +10,6 @@ import (
 )
 
 const URL = "http://localhost/images/"
-const SAME_FILE = false
 
 func checkerr(err error) {
 	if err != nil {
@@ -25,14 +24,14 @@ type Result struct {
 	End        time.Time
 }
 
-func Query(i int) *Result {
+func Query(i int, unique bool) *Result {
 	res := &Result{
 		Start:      time.Now(),
 		ImageIndex: i,
 	}
 
 	target := fmt.Sprintf("%s%d.jpg", URL, i)
-	if SAME_FILE {
+	if !unique {
 		target = URL + "1.png"
 	}
 
@@ -44,7 +43,7 @@ func Query(i int) *Result {
 	return res
 }
 
-func RunTest(clients int, requests int) chan *Result {
+func RunTest(clients int, requests int, unique bool) chan *Result {
 	wg := &sync.WaitGroup{}
 	wg.Add(clients)
 	results := make(chan *Result, requests*clients)
@@ -52,7 +51,7 @@ func RunTest(clients int, requests int) chan *Result {
 	for i := 0; i < clients; i++ {
 		go func(j int) {
 			for q := 0; q < requests; q++ {
-				r := Query(j)
+				r := Query(j, unique)
 				r.ClientNum = j
 				results <- r
 
@@ -69,8 +68,14 @@ func RunTest(clients int, requests int) chan *Result {
 }
 
 // Write out results as csv. Each line has the form: clientID,start,end,duration,type
-func Output(clients, requests int, res chan *Result, fname string) {
-	f, err := os.Create(fmt.Sprintf("%s/%dc-%dr", fname, clients, requests))
+func Output(clients, requests int, res chan *Result, unique bool, fname string) {
+	isUnique := "unique"
+
+	if !unique {
+		isUnique = "shared"
+	}
+
+	f, err := os.Create(fmt.Sprintf("%s/%dc-%dr-%s", fname, clients, requests, isUnique))
 	checkerr(err)
 
 	for r := range res {
@@ -90,8 +95,10 @@ func main() {
 	checkerr(err)
 	REQUESTS, e := strconv.Atoi(os.Args[2])
 	checkerr(e)
-	OUTPUT_DIR := os.Args[3]
+	UNIQUE, e := strconv.ParseBool(os.Args[3])
+	checkerr(e)
+	OUTPUT_DIR := os.Args[4]
 
-	results := RunTest(CLIENTS, REQUESTS)
-	Output(CLIENTS, REQUESTS, results, OUTPUT_DIR)
+	results := RunTest(CLIENTS, REQUESTS, UNIQUE)
+	Output(CLIENTS, REQUESTS, results, UNIQUE, OUTPUT_DIR)
 }

@@ -55,21 +55,24 @@ Find installtion instructions for postgres online. Once installed, you need to c
 ### apache
 
 - Remove the restriction on root access from 'etc/apache2/apache2.conf'
-- Configure static serving from the new directory
-
-      # configure static file serving
-      DocumentRoot /media/damouse/fsb
-      <Directory /media/damouse/fsb>
-          Order deny,allow
-          Allow from all
-      </Directory>
+- Configure static serving from the new directory. Check the files in ./config. These are copies of config files that belong in /etc/apache2
 
 
 Restart the apache service:
 
     sudu systemctl restart apache2
 
+Note that apache caching is turned off with the following:
 
+<filesMatch ".jpg">
+  FileETag None
+  <ifModule mod_headers.c>
+     Header unset ETag
+     Header set Cache-Control "max-age=0, no-cache, no-store, must-revalidate"
+     Header set Pragma "no-cache"
+     Header set Expires "Wed, 11 Jan 1984 05:00:00 GMT"
+  </ifModule>
+</filesMatch>
 
 
 ## Compilation

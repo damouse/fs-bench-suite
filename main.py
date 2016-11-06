@@ -24,9 +24,7 @@ IMGSERVER_RESULTS_PATH = RESULTS_PATH + '/apache/'
 
 # Each tuple here is a test. Format is (#clients, #requests)
 GOPG_PARAMS = [(1, 10), (1, 100), (1, 1000), (10, 10), (10, 100), (10, 1000)]
-# IMG_PARAMS = [(1, 10), (1, 100), (1, 1000), (10, 10), (10, 100), (10, 1000)]
-
-IMG_PARAMS = [(1, 10), (1, 100)]
+IMG_PARAMS = [(1, 10), (1, 100), (1, 1000), (10, 10), (10, 100), (10, 1000)]
 
 
 def compilation_test():
@@ -51,13 +49,17 @@ def webserver_test():
     graph_go_pg()
 
 
-def imgserver_test(copies):
+def imgserver_test():
     cleardir(IMAGE_DIR)
     cleardir(IMGSERVER_RESULTS_PATH)
 
+    copies = IMG_PARAMS[-1][1]
     [shutil.copy('1.jpg', os.path.join(IMAGE_DIR, str(x) + '.jpg')) for x in range(copies)]
 
-    [subprocess.call("go run imgclient/*.go %s %s %s" % (x, y, IMGSERVER_RESULTS_PATH), shell=True) for x, y in IMG_PARAMS]
+    for x, y in IMG_PARAMS:
+        subprocess.call("go run imgclient/*.go %s %s true %s" % (x, y, IMGSERVER_RESULTS_PATH), shell=True)
+        subprocess.call("go run imgclient/*.go %s %s false %s" % (x, y, IMGSERVER_RESULTS_PATH), shell=True)
+
     graph_apache()
 
 
@@ -87,7 +89,7 @@ def graph_go_pg():
 
 
 def graph_apache():
-    ''' Read every csv output from goserver and graph the results '''
+    ''' Read every csv output from apache and graph the results '''
 
     for name in glob.glob(os.path.join(IMGSERVER_RESULTS_PATH, "*")):
         with open(name, 'r') as f:
@@ -121,4 +123,4 @@ def cleardir(d):
 if __name__ == '__main__':
     # compilation_test()
     # webserver_test()
-    imgserver_test(10)
+    imgserver_test()
