@@ -52,6 +52,25 @@ Find installtion instructions for postgres online. Once installed, you need to c
     sudo systemctl start postgresql
 
 
+### apache
+
+- Remove the restriction on root access from 'etc/apache2/apache2.conf'
+- Configure static serving from the new directory
+
+      # configure static file serving
+      DocumentRoot /media/damouse/fsb
+      <Directory /media/damouse/fsb>
+          Order deny,allow
+          Allow from all
+      </Directory>
+
+
+Restart the apache service:
+
+    sudu systemctl restart apache2
+
+
+
 
 ## Compilation
 
