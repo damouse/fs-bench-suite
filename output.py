@@ -58,15 +58,6 @@ class TestResults():
         self.min_value = min(self.lines, key=lambda x: x.diff_time).diff_time
 
 
-def load_data():
-    # return [TestResults('ntfs', 'apache', 'results\\ntfs\\apache\\10c-10r-shared')]
-    return [TestResults(fs, test, file)
-            for test in ['apache', 'go-pg']
-            for fs in ['ntfs', 'ext4', 'zfs']
-            for file in glob.glob(os.path.join(RESULTS_PATH, fs, test, '*'))]
-
-
-# Scatter plots
 def latency_scatter(result, output_subfolder=None):
     time = [x.start_time - result.start for x in result.lines]
     lat = [x.diff_time for x in result.lines]
@@ -88,12 +79,9 @@ def latency_scatter(result, output_subfolder=None):
 
 
 def latency_cdf(result, output_subfolder=None):
-    latencies = map(lambda x: x.diff_time, result.lines)
-    cdfx = numpy.sort(latencies)
-    cdfy = numpy.linspace(1 / len(latencies), 1.0, len(latencies))
-    logcdfy = [-math.log10(1.0 - (float(idx) / len(latencies))) for idx in range(len(latencies))]
+    data = numpy.sort(map(lambda x: x.diff_time, result.lines))
 
-    plot.plot(cdfx, logcdfy)
+    plot.plot(data, numpy.linspace(0, 1, len(data)))
     plot.xlim([0, result.max_value])
     plot.ylim([0, 1])
     plot.grid()
@@ -115,21 +103,22 @@ def aggregate_cdf(results, output_subfolder=None):
     for test_group in zip(*[filter(lambda x: x.fs == fs, results) for fs in ['ntfs', 'ext4', 'zfs']]):
         for fs in test_group:
             latencies = map(lambda x: x.diff_time, fs.lines)
+
             cdfx = numpy.sort(latencies)
             cdfy = numpy.linspace(1 / len(latencies), 1.0, len(latencies))
             logcdfy = [-math.log10(1.0 - (float(idx) / len(latencies))) for idx in range(len(latencies))]
-            plot.plot(cdfx, logcdfy, label=fs.fs)
+
+            # plot.plot(cdfx, logcdfy, label=fs.fs)
+            plot.plot(cdfx, numpy.linspace(0, 1, len(cdfx)), label=fs.fs)
 
         plot.ylabel('Count')
         plot.xlabel('Latency (ms)')
         plot.title('{} Duration CDF: {} clients with {} requests each'.format(test_group[0].pretty_name, test_group[0].clients, test_group[0].requests))
-        plot.legend()
+        plot.legend(loc='lower right')
 
-        plot.xlim([0, max(map(lambda x: x.max_value, test_group)) * 2])
-        plot.ylim([0, 5])
+        plot.xlim([0, max(map(lambda x: x.max_value, test_group))])
+        plot.ylim([0, 1.05])
         plot.grid()
-        # plot.show()
-        # sys.exit(0)
 
         if output_subfolder is None:
             plot.show()
@@ -146,28 +135,56 @@ def pdf(x, mu=0, sigma=1):
     term2 = numpy.exp(-0.5 * ((x - mu) / sigma)**2)
     return term1 * term2
 
-if __name__ == '__main__':
-    all_data = load_data()
 
+def load_data():
+    return [TestResults(fs, test, file)
+            for test in ['apache', 'go-pg']
+            for fs in ['ntfs', 'ext4', 'zfs']
+            for file in glob.glob(os.path.join(RESULTS_PATH, fs, test, '*'))]
+
+
+def graph(all_data):
     for test in ['apache', 'go-pg']:
         data = filter(lambda x: x.test == test, all_data)
 
         # Individual scatter plots
-        # p = os.path.join(GRAPH_PATH, test, 'scatter')
-        # runner.cleardir(p)
-        # [latency_scatter(d, p) for d in data]
+        p = os.path.join(GRAPH_PATH, test, 'scatter')
+        runner.cleardir(p)
+        [latency_scatter(d, p) for d in data]
 
-        # # Individual CDFs
-        # p = os.path.join(GRAPH_PATH, test, 'cdf')
-        # runner.cleardir(p)
-        # [latency_cdf(d, p) for d in data]
+        # Individual CDFs
+        p = os.path.join(GRAPH_PATH, test, 'cdf')
+        runner.cleardir(p)
+        [latency_cdf(d, p) for d in data]
 
         # Aggregate CDFs
         p = os.path.join(GRAPH_PATH, test, 'aggregate-cdf')
         runner.cleardir(p)
         aggregate_cdf(data, p)
 
-    # print data[0].name
-    # latency_scatter(data[0])
-    # pretty_cdf()
-    # samples()
+
+def test():
+    t = TestResults('ext4', 'apache', 'results\\ext4\\apache\\10c-1000r-shared')
+    d = map(lambda x: x.diff_time, t.lines)
+    data = numpy.sort(d)
+
+    # cdfx = numpy.sort(latencies)
+    cdfy = numpy.linspace(1 / len(d), 1.0, len(d))
+    # plot the CDF
+    plot.plot(data, cdfy)
+
+    # With linspace, no cdf calculation
+    # Can easily do log with [1 + math.log10(d) for d in data], but have to update the axes too
+    # cdfy = numpy.linspace(0, 1, len(data))
+    # plot.plot(data, cdfy)
+    # plot.ylim([0, 1.1])
+
+    plot.grid()
+    plot.show()
+
+
+if __name__ == '__main__':
+    all_data = load_data()
+
+    graph(all_data)
+    # test()
