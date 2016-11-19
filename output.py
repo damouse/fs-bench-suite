@@ -2,13 +2,15 @@
 Graphing and processing
 '''
 
-import numpy
-import matplotlib.pyplot as plot
-from math import ceil, floor, sqrt
 import math
 import glob
 import os
 import sys
+
+import numpy
+import matplotlib.pyplot as plot
+from math import ceil, floor, sqrt
+from scipy import stats
 
 import runner
 
@@ -37,7 +39,9 @@ class TestResults():
         self.test = test
 
         # Basic names
-        self.name = filepath.split('\\')[-1]
+        # self.name = filepath.split('\\')[-1]
+        self.name = filepath.split('/')[-1]
+
         split = self.name.split('-')
         self.clients = int(split[0].replace('c', ''))
         self.requests = int(split[1].replace('r', ''))
@@ -163,7 +167,7 @@ def graph(all_data):
         aggregate_cdf(data, p)
 
 
-def test():
+def test_cdf():
     t = TestResults('ext4', 'apache', 'results\\ext4\\apache\\10c-1000r-shared')
     d = map(lambda x: x.diff_time, t.lines)
     data = numpy.sort(d)
@@ -183,8 +187,31 @@ def test():
     plot.show()
 
 
+def test_bars():
+    t = TestResults('ext4', 'apache', os.path.join('results', 'ext4', 'apache', '10c-1000r-shared'))
+    d = map(lambda x: x.diff_time, t.lines)
+    data = numpy.sort(d)
+
+    # x = numpy.linspace(0, 5, num=500)
+    x = data
+    x_pdf = stats.maxwell.pdf(x)
+    # samples = stats.maxwell.rvs(size=10000)
+
+    bin_means, bin_edges, binnumber = stats.binned_statistic(x, x_pdf, statistic='mean', bins=25)
+    bin_width = (bin_edges[1] - bin_edges[0])
+    bin_centers = bin_edges[1:] - bin_width / 2
+
+    plot.figure()
+    plot.hist(x, bins=50, normed=True, histtype='stepfilled', alpha=0.2, label='histogram of data')
+    plot.plot(x, x_pdf, 'r-', label='analytical pdf')
+    plot.hlines(bin_means, bin_edges[:-1], bin_edges[1:], colors='g', lw=2, label='binned statistic of data')
+    plot.plot((binnumber - 0.5) * bin_width, x_pdf, 'g.', alpha=0.5)
+    plot.legend(fontsize=10)
+    plot.show()
+
+
 if __name__ == '__main__':
     all_data = load_data()
 
-    graph(all_data)
-    # test()
+    # graph(all_data)
+    test_bars()
