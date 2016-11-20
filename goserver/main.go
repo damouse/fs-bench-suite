@@ -8,8 +8,44 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"syscall"
 	"time"
+	"unsafe"
 )
+
+// Windows specific timer. Go's default timer maxes out at 1ms accuracy, this has 1ns
+// by calling directly into the win32 apis
+func init() {
+	QPCTimer := func() func() time.Duration {
+		lib, _ := syscall.LoadLibrary("kernel32.dll")
+		qpc, _ := syscall.GetProcAddress(lib, "QueryPerformanceCounter")
+		qpf, _ := syscall.GetProcAddress(lib, "QueryPerformanceFrequency")
+		if qpc == 0 || qpf == 0 {
+			return nil
+		}
+
+		var freq, start uint64
+		syscall.Syscall(qpf, 1, uintptr(unsafe.Pointer(&freq)), 0, 0)
+		syscall.Syscall(qpc, 1, uintptr(unsafe.Pointer(&start)), 0, 0)
+		if freq <= 0 {
+			return nil
+		}
+
+		freqns := float64(freq) / 1e9
+
+		return func() time.Duration {
+			var now uint64
+			syscall.Syscall(qpc, 1, uintptr(unsafe.Pointer(&now)), 0, 0)
+			return time.Duration(float64(now-start) / freqns)
+		}
+	}
+
+	if Clock = QPCTimer(); Clock == nil {
+		// Fallback implementation
+		start := time.Now()
+		Clock = func() time.Duration { return time.Since(start) }
+	}
+}
 
 const (
 	PCT_POST = 0.5 // Percentage of calls that are post requests
@@ -18,8 +54,8 @@ const (
 
 type Result struct {
 	ClientNum int
-	Start     time.Time
-	End       time.Time
+	Start     time.Duration
+	End       time.Duration
 	CallType  string
 }
 
@@ -28,7 +64,7 @@ func Query() *Result {
 	var err error
 
 	res := &Result{
-		Start: time.Now(),
+		Start: Clock(),
 	}
 
 	if rand.Float32() > PCT_POST {
@@ -39,7 +75,7 @@ func Query() *Result {
 		res.CallType = "Get"
 	}
 
-	res.End = time.Now()
+	res.End = Clock()
 	checkerr(err)
 	req.Body.Close()
 	return res
@@ -73,8 +109,12 @@ func Output(clients, requests int, res chan *Result, fname string) {
 	checkerr(err)
 
 	for r := range res {
-		f.Write([]byte(fmt.Sprintf("%d,%d,%d,%d,%s\n", r.ClientNum, r.Start.Nanosecond()/1e3, r.End.Nanosecond()/1e3,
-			r.End.Sub(r.Start).Nanoseconds()/1e3, r.CallType)))
+		f.Write([]byte(fmt.Sprintf("%d,%d,%d,%d,%s\n",
+			r.ClientNum,
+			r.Start.Nanosecond()/1e3,
+			r.End.Nanosecond()/1e3,
+			(r.End-r.Start).Nanoseconds()/1e3,
+			r.CallType)))
 	}
 
 	f.Close()

@@ -17,6 +17,9 @@ import runner
 RESULTS_PATH = 'results'
 GRAPH_PATH = 'graphs'
 
+# Windows paths... why
+FILE_SEPERATOR = '\\'
+
 
 class ResultRow():
 
@@ -39,8 +42,7 @@ class TestResults():
         self.test = test
 
         # Basic names
-        # self.name = filepath.split('\\')[-1]
-        self.name = filepath.split('/')[-1]
+        self.name = filepath.split(FILE_SEPERATOR)[-1]
 
         split = self.name.split('-')
         self.clients = int(split[0].replace('c', ''))
@@ -190,25 +192,56 @@ def test_cdf():
 def test_bars():
     t = TestResults('ext4', 'apache', os.path.join('results', 'ext4', 'apache', '10c-1000r-shared'))
     d = map(lambda x: x.diff_time, t.lines)
-    data = numpy.sort(d)
+    data = numpy.array(d)
 
-    # x = numpy.linspace(0, 5, num=500)
-    x = data
-    x_pdf = stats.maxwell.pdf(x)
-    # samples = stats.maxwell.rvs(size=10000)
+    for d in data:
+        print d
 
-    bin_means, bin_edges, binnumber = stats.binned_statistic(x, x_pdf, statistic='mean', bins=25)
-    bin_width = (bin_edges[1] - bin_edges[0])
-    bin_centers = bin_edges[1:] - bin_width / 2
+    # fake up some data
+    # spread = numpy.random.rand(50) * 100
+    # center = numpy.ones(25) * 50
+    # flier_high = numpy.random.rand(10) * 100 + 100
+    # flier_low = numpy.random.rand(10) * -100
+    # data = numpy.concatenate((spread, center, flier_high, flier_low), 0)
 
-    plot.figure()
-    plot.hist(x, bins=50, normed=True, histtype='stepfilled', alpha=0.2, label='histogram of data')
-    plot.plot(x, x_pdf, 'r-', label='analytical pdf')
-    plot.hlines(bin_means, bin_edges[:-1], bin_edges[1:], colors='g', lw=2, label='binned statistic of data')
-    plot.plot((binnumber - 0.5) * bin_width, x_pdf, 'g.', alpha=0.5)
-    plot.legend(fontsize=10)
+    bins = numpy.linspace(0, 1, 10)
+    digitized = numpy.digitize(data, bins)
+    bin_means = [list(data[digitized == i]) for i in range(1, len(bins))]
+
+    for i in range(1, len(bins)):
+        print data[digitized == i]
+        print type(data[digitized == i])
+        # plot.boxplot(data[digitized == i], 0, '')
+
+    plot.boxplot(bin_means, 0, '')
+
+    # horizontal boxes
+    # plot.figure()
+    # plot.boxplot(data, 0, 'rs', 0)
+
+    # # change whisker length
+    # plot.figure()
+    # plot.boxplot(data, 0, 'rs', 0, 0.75)
+
+    # # fake up some more data
+    # spread = numpy.random.rand(50) * 100
+    # center = numpy.ones(25) * 40
+    # flier_high = numpy.random.rand(10) * 100 + 100
+    # flier_low = numpy.random.rand(10) * -100
+    # d2 = numpy.concatenate((spread, center, flier_high, flier_low), 0)
+    # data.shape = (-1, 1)
+    # d2.shape = (-1, 1)
+    # # data = concatenate( (data, d2), 1 )
+    # # Making a 2-D array only works if all the columns are the
+    # # same length.  If they are not, then use a list instead.
+    # # This is actually more efficient because boxplot converts
+    # # a 2-D array into a list of vectors internally anyway.
+    # data = [data, d2, d2[::2, 0]]
+    # # multiple box plots on one figure
+    # plot.figure()
+    # plot.boxplot(data)
+
     plot.show()
-
 
 if __name__ == '__main__':
     all_data = load_data()
