@@ -190,57 +190,13 @@ def test_cdf():
 
 
 def test_bars():
-    t = TestResults('ext4', 'apache', os.path.join('results', 'ext4', 'apache', '10c-1000r-shared'))
-    d = map(lambda x: x.diff_time, t.lines)
-    data = numpy.array(d)
+    t = TestResults('ext4', 'apache', os.path.join('results', 'ext4', 'apache', '10c-10r-shared'))
+    bins = numpy.linspace(t.start, t.end, 30)
 
-    for d in data:
-        print d
+    binned = [filter(lambda x: maxx > x.start_time > minn, t.lines) for (minn, maxx) in zip(bins[:-1], bins[1:])]
+    binned = [map(lambda x: x.diff_time, y) for y in binned]
 
-    # fake up some data
-    # spread = numpy.random.rand(50) * 100
-    # center = numpy.ones(25) * 50
-    # flier_high = numpy.random.rand(10) * 100 + 100
-    # flier_low = numpy.random.rand(10) * -100
-    # data = numpy.concatenate((spread, center, flier_high, flier_low), 0)
-
-    bins = numpy.linspace(0, 1, 10)
-    digitized = numpy.digitize(data, bins)
-    bin_means = [list(data[digitized == i]) for i in range(1, len(bins))]
-
-    for i in range(1, len(bins)):
-        print data[digitized == i]
-        print type(data[digitized == i])
-        # plot.boxplot(data[digitized == i], 0, '')
-
-    plot.boxplot(bin_means, 0, '')
-
-    # horizontal boxes
-    # plot.figure()
-    # plot.boxplot(data, 0, 'rs', 0)
-
-    # # change whisker length
-    # plot.figure()
-    # plot.boxplot(data, 0, 'rs', 0, 0.75)
-
-    # # fake up some more data
-    # spread = numpy.random.rand(50) * 100
-    # center = numpy.ones(25) * 40
-    # flier_high = numpy.random.rand(10) * 100 + 100
-    # flier_low = numpy.random.rand(10) * -100
-    # d2 = numpy.concatenate((spread, center, flier_high, flier_low), 0)
-    # data.shape = (-1, 1)
-    # d2.shape = (-1, 1)
-    # # data = concatenate( (data, d2), 1 )
-    # # Making a 2-D array only works if all the columns are the
-    # # same length.  If they are not, then use a list instead.
-    # # This is actually more efficient because boxplot converts
-    # # a 2-D array into a list of vectors internally anyway.
-    # data = [data, d2, d2[::2, 0]]
-    # # multiple box plots on one figure
-    # plot.figure()
-    # plot.boxplot(data)
-
+    plot.boxplot(binned, 0, '')
     plot.show()
 
 if __name__ == '__main__':
