@@ -76,11 +76,7 @@ def latency_scatter(result, output_subfolder=None):
     plot.ylabel('Latency (ms)')
     plot.xlabel('Request Send Time (ms from start)')
 
-    if output_subfolder is None:
-        plot.show()
-    else:
-        plot.savefig(os.path.join(output_subfolder, result.fs + '-' + result.name))
-
+    show_or_save(result, output_subfolder)
     plot.clf()
 
 
@@ -96,11 +92,17 @@ def latency_cdf(result, output_subfolder=None):
     plot.ylabel('Count')
     plot.xlabel('Latency (ms)')
 
-    if output_subfolder is None:
-        plot.show()
-    else:
-        plot.savefig(os.path.join(output_subfolder, result.fs + '-' + result.name))
+    show_or_save(result, output_subfolder)
+    plot.clf()
 
+
+def latency_boxplot(result, output_subfolder=None):
+    bins = numpy.linspace(result.start, result.end, 30)
+    binned = [filter(lambda x: maxx > x.start_time > minn, result.lines) for (minn, maxx) in zip(bins[:-1], bins[1:])]
+    binned = [map(lambda x: x.diff_time, y) for y in binned]
+
+    plot.boxplot(binned, 0, '')
+    show_or_save(result, output_subfolder)
     plot.clf()
 
 
@@ -109,7 +111,6 @@ def aggregate_cdf(results, output_subfolder=None):
     for test_group in zip(*[filter(lambda x: x.fs == fs, results) for fs in ['ntfs', 'ext4', 'zfs']]):
         for fs in test_group:
             latencies = map(lambda x: x.diff_time, fs.lines)
-
             cdfx = numpy.sort(latencies)
             cdfy = numpy.linspace(1 / len(latencies), 1.0, len(latencies))
             logcdfy = [-math.log10(1.0 - (float(idx) / len(latencies))) for idx in range(len(latencies))]
@@ -126,6 +127,7 @@ def aggregate_cdf(results, output_subfolder=None):
         plot.ylim([0, 1.05])
         plot.grid()
 
+        # show_or_save(result, output_subfolder)
         if output_subfolder is None:
             plot.show()
         elif test_group[0].test == 'apache':
@@ -136,17 +138,62 @@ def aggregate_cdf(results, output_subfolder=None):
         plot.clf()
 
 
-def pdf(x, mu=0, sigma=1):
-    term1 = 1.0 / (sqrt(2 * numpy.pi) * sigma)
-    term2 = numpy.exp(-0.5 * ((x - mu) / sigma)**2)
-    return term1 * term2
+def aggregate_boxplot(results, output_subfolder=None):
+    # Create 3-tuples that contain the same test conditions for each fs
+    for test_group in zip(*[filter(lambda x: x.fs == fs, results) for fs in ['ntfs', 'ext4', 'zfs']]):
+        for fs in test_group:
+            bins = numpy.linspace(fs.start, fs.end, 20)
+            binned = [filter(lambda x: maxx > x.start_time > minn, fs.lines) for (minn, maxx) in zip(bins[:-1], bins[1:])]
+            binned = [map(lambda x: x.diff_time, y) for y in binned]
+            medians = [numpy.median(x) for x in binned]
+
+            plot.boxplot(binned, 0, '')
+            plot.plot([0] + medians)
+
+        plot.ylabel('Duration')
+        plot.xlabel('Time (ms)')
+        plot.title('{} Duration CDF: {} clients with {} requests each'.format(test_group[0].pretty_name, test_group[0].clients, test_group[0].requests))
+        plot.legend(loc='lower right')
+
+        # plot.xlim([0, max(map(lambda x: x.max_value, test_group))])
+        # plot.ylim([0, 1.05])
+        plot.grid()
+
+        # show_or_save(result, output_subfolder)
+        if output_subfolder is None:
+            plot.show()
+        elif test_group[0].test == 'apache':
+            plot.savefig(os.path.join(output_subfolder, '{}-{}-{}'.format(test_group[0].clients, test_group[0].requests, test_group[0].unique)))
+        else:
+            plot.savefig(os.path.join(output_subfolder, '{}-{}'.format(test_group[0].clients, test_group[0].requests)))
+
+        plot.clf()
 
 
-def load_data():
+def load_macrobenchmarks():
     return [TestResults(fs, test, file)
             for test in ['apache', 'go-pg']
             for fs in ['ntfs', 'ext4', 'zfs']
             for file in glob.glob(os.path.join(RESULTS_PATH, fs, test, '*'))]
+
+
+def show_or_save(result, output_subfolder):
+    if output_subfolder is None:
+        plot.show()
+    else:
+        plot.savefig(os.path.join(output_subfolder, result.fs + '-' + result.name))
+
+
+def test_bars():
+    t = TestResults('ext4', 'apache', os.path.join('results', 'ext4', 'apache', '10c-10r-shared'))
+    bins = numpy.linspace(t.start, t.end, 20)
+    binned = [filter(lambda x: maxx > x.start_time > minn, t.lines) for (minn, maxx) in zip(bins[:-1], bins[1:])]
+    binned = [map(lambda x: x.diff_time, y) for y in binned]
+    medians = [numpy.median(x) for x in binned]
+
+    plot.boxplot(binned, 0, '')
+    plot.plot([0] + medians)
+    plot.show()
 
 
 def graph(all_data):
@@ -163,44 +210,22 @@ def graph(all_data):
         runner.cleardir(p)
         [latency_cdf(d, p) for d in data]
 
+        # Individual Boxplots
+        p = os.path.join(GRAPH_PATH, test, 'boxplot')
+        runner.cleardir(p)
+        [latency_boxplot(d, p) for d in data]
+
         # Aggregate CDFs
         p = os.path.join(GRAPH_PATH, test, 'aggregate-cdf')
         runner.cleardir(p)
         aggregate_cdf(data, p)
 
-
-def test_cdf():
-    t = TestResults('ext4', 'apache', 'results\\ext4\\apache\\10c-1000r-shared')
-    d = map(lambda x: x.diff_time, t.lines)
-    data = numpy.sort(d)
-
-    # cdfx = numpy.sort(latencies)
-    cdfy = numpy.linspace(1 / len(d), 1.0, len(d))
-    # plot the CDF
-    plot.plot(data, cdfy)
-
-    # With linspace, no cdf calculation
-    # Can easily do log with [1 + math.log10(d) for d in data], but have to update the axes too
-    # cdfy = numpy.linspace(0, 1, len(data))
-    # plot.plot(data, cdfy)
-    # plot.ylim([0, 1.1])
-
-    plot.grid()
-    plot.show()
-
-
-def test_bars():
-    t = TestResults('ext4', 'apache', os.path.join('results', 'ext4', 'apache', '10c-10r-shared'))
-    bins = numpy.linspace(t.start, t.end, 30)
-
-    binned = [filter(lambda x: maxx > x.start_time > minn, t.lines) for (minn, maxx) in zip(bins[:-1], bins[1:])]
-    binned = [map(lambda x: x.diff_time, y) for y in binned]
-
-    plot.boxplot(binned, 0, '')
-    plot.show()
+        # Aggregate CDFs
+        p = os.path.join(GRAPH_PATH, test, 'aggregate-boxplot')
+        runner.cleardir(p)
+        aggregate_boxplot(data, None)
 
 if __name__ == '__main__':
-    all_data = load_data()
-
-    # graph(all_data)
-    test_bars()
+    all_data = load_macrobenchmarks()
+    graph(all_data)
+    # test_bars()
