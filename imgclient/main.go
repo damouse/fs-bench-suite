@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"sync"
 	"syscall"
 	"time"
 	"unsafe"
@@ -52,7 +51,7 @@ func init() {
 func checkerr(err error) {
 	if err != nil {
 		fmt.Println("Some error has occured")
-		panic(err)
+		panic(err.Error())
 	}
 }
 
@@ -77,33 +76,38 @@ func Query(i int, unique bool) *Result {
 	response, e := http.Get(target)
 	res.End = Clock()
 
-	checkerr(e)
-	response.Body.Close()
-	return res
+	if e != nil {
+		return nil
+	} else {
+		response.Body.Close()
+		return res
+	}
 }
 
 func RunTest(clients int, seconds int, unique bool) chan *Result {
-	wg := &sync.WaitGroup{}
-	wg.Add(clients)
 	results := make(chan *Result, seconds*100000*clients)
+	closed := false
 
 	for i := 0; i < clients; i++ {
 		go func(j int) {
 			for {
-				r := Query(j, unique)
-				r.ClientNum = j
-				results <- r
+				if r := Query(j, unique); r == nil {
+					continue
+				} else if closed {
+					return
+				} else {
+					r.ClientNum = j
+					results <- r
+				}
 			}
-
-			// wg.Done()
 		}(i)
 	}
 
 	// wg.Wait()
 	// close(results)
-	fmt.Println("Waiting for timer...")
 	<-time.After(time.Duration(seconds) * time.Second)
-	fmt.Println("Timer fired")
+	close(results)
+	closed = true
 	return results
 }
 
@@ -128,6 +132,7 @@ func Output(clients, requests int, res chan *Result, unique bool, fname string) 
 	}
 
 	f.Close()
+	os.Exit(0)
 }
 
 func main() {
