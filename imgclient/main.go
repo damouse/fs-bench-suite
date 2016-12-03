@@ -82,25 +82,28 @@ func Query(i int, unique bool) *Result {
 	return res
 }
 
-func RunTest(clients int, requests int, unique bool) chan *Result {
+func RunTest(clients int, seconds int, unique bool) chan *Result {
 	wg := &sync.WaitGroup{}
 	wg.Add(clients)
-	results := make(chan *Result, requests*clients)
+	results := make(chan *Result, seconds*100000*clients)
 
 	for i := 0; i < clients; i++ {
 		go func(j int) {
-			for q := 0; q < requests; q++ {
+			for {
 				r := Query(j, unique)
 				r.ClientNum = j
 				results <- r
 			}
 
-			wg.Done()
+			// wg.Done()
 		}(i)
 	}
 
-	wg.Wait()
-	close(results)
+	// wg.Wait()
+	// close(results)
+	fmt.Println("Waiting for timer...")
+	<-time.After(time.Duration(seconds) * time.Second)
+	fmt.Println("Timer fired")
 	return results
 }
 
@@ -130,13 +133,13 @@ func Output(clients, requests int, res chan *Result, unique bool, fname string) 
 func main() {
 	CLIENTS, err := strconv.Atoi(os.Args[1])
 	checkerr(err)
-	REQUESTS, e := strconv.Atoi(os.Args[2])
+	SECONDS, e := strconv.Atoi(os.Args[2])
 	checkerr(e)
 	UNIQUE, e := strconv.ParseBool(os.Args[3])
 	checkerr(e)
 	OUTPUT_DIR := os.Args[4]
 
-	results := RunTest(CLIENTS, REQUESTS, UNIQUE)
-	Output(CLIENTS, REQUESTS, results, UNIQUE, OUTPUT_DIR)
+	results := RunTest(CLIENTS, SECONDS, UNIQUE)
+	Output(CLIENTS, SECONDS, results, UNIQUE, OUTPUT_DIR)
 	fmt.Println("Done")
 }
