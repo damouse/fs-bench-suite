@@ -7,11 +7,12 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"sync"
 	"syscall"
 	"time"
 	"unsafe"
 )
+
+var Clock func() time.Duration
 
 // Windows specific timer. Go's default timer maxes out at 1ms accuracy, this has 1ns
 // by calling directly into the win32 apis
@@ -76,30 +77,37 @@ func Query() *Result {
 	}
 
 	res.End = Clock()
-	checkerr(err)
-	req.Body.Close()
-	return res
+
+	if err != nil {
+		return nil
+	} else {
+		req.Body.Close()
+		return res
+	}
 }
 
-func RunTest(clients int, requests int) chan *Result {
-	wg := &sync.WaitGroup{}
-	wg.Add(clients)
-	results := make(chan *Result, requests*clients)
+func RunTest(clients int, seconds int) chan *Result {
+	results := make(chan *Result, seconds*100000*clients)
+	closed := false
 
 	for i := 0; i < clients; i++ {
 		go func(j int) {
-			for q := 0; q < requests; q++ {
-				r := Query()
-				r.ClientNum = j
-				results <- r
+			for {
+				if r := Query(); r == nil {
+					continue
+				} else if closed {
+					return
+				} else {
+					r.ClientNum = j
+					results <- r
+				}
 			}
-
-			wg.Done()
 		}(i)
 	}
 
-	wg.Wait()
+	<-time.After(time.Duration(seconds) * time.Second)
 	close(results)
+	closed = true
 	return results
 }
 
@@ -111,8 +119,8 @@ func Output(clients, requests int, res chan *Result, fname string) {
 	for r := range res {
 		f.Write([]byte(fmt.Sprintf("%d,%d,%d,%d,%s\n",
 			r.ClientNum,
-			r.Start.Nanosecond()/1e3,
-			r.End.Nanosecond()/1e3,
+			r.Start.Nanoseconds()/1e3,
+			r.End.Nanoseconds()/1e3,
 			(r.End-r.Start).Nanoseconds()/1e3,
 			r.CallType)))
 	}

@@ -86,5 +86,5 @@ def cleardir(d):
 
 if __name__ == '__main__':
     # compilation_test()
-    webserver_test()
-    # imgserver_test()
+    # webserver_test()
+    imgserver_test()
