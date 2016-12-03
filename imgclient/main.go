@@ -6,13 +6,52 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"syscall"
 	"time"
+	"unsafe"
 )
 
-const URL = "http://localhost/images/"
+const URL = "http://localhost/"
+
+var Clock func() time.Duration
+
+// Windows specific timer. Go's default timer maxes out at 1ms accuracy, this has 1ns
+// by calling directly into the win32 apis
+func init() {
+	QPCTimer := func() func() time.Duration {
+		lib, _ := syscall.LoadLibrary("kernel32.dll")
+		qpc, _ := syscall.GetProcAddress(lib, "QueryPerformanceCounter")
+		qpf, _ := syscall.GetProcAddress(lib, "QueryPerformanceFrequency")
+		if qpc == 0 || qpf == 0 {
+			return nil
+		}
+
+		var freq, start uint64
+		syscall.Syscall(qpf, 1, uintptr(unsafe.Pointer(&freq)), 0, 0)
+		syscall.Syscall(qpc, 1, uintptr(unsafe.Pointer(&start)), 0, 0)
+		if freq <= 0 {
+			return nil
+		}
+
+		freqns := float64(freq) / 1e9
+
+		return func() time.Duration {
+			var now uint64
+			syscall.Syscall(qpc, 1, uintptr(unsafe.Pointer(&now)), 0, 0)
+			return time.Duration(float64(now-start) / freqns)
+		}
+	}
+
+	if Clock = QPCTimer(); Clock == nil {
+		// Fallback implementation
+		start := time.Now()
+		Clock = func() time.Duration { return time.Since(start) }
+	}
+}
 
 func checkerr(err error) {
 	if err != nil {
+		fmt.Println("Some error has occured")
 		panic(err)
 	}
 }
@@ -20,13 +59,13 @@ func checkerr(err error) {
 type Result struct {
 	ClientNum  int
 	ImageIndex int
-	Start      time.Time
-	End        time.Time
+	Start      time.Duration
+	End        time.Duration
 }
 
 func Query(i int, unique bool) *Result {
 	res := &Result{
-		Start:      time.Now(),
+		Start:      Clock(),
 		ImageIndex: i,
 	}
 
@@ -36,7 +75,7 @@ func Query(i int, unique bool) *Result {
 	}
 
 	response, e := http.Get(target)
-	res.End = time.Now()
+	res.End = Clock()
 
 	checkerr(e)
 	response.Body.Close()
@@ -54,8 +93,6 @@ func RunTest(clients int, requests int, unique bool) chan *Result {
 				r := Query(j, unique)
 				r.ClientNum = j
 				results <- r
-
-				// fmt.Printf("Client %d request %d time %d\n", j, q, r.End.Sub(r.Start).Nanoseconds()/1e3)
 			}
 
 			wg.Done()
@@ -81,9 +118,9 @@ func Output(clients, requests int, res chan *Result, unique bool, fname string) 
 	for r := range res {
 		f.Write([]byte(fmt.Sprintf("%d,%d,%d,%d,%d\n",
 			r.ClientNum,
-			r.Start.Nanosecond()/1e3,
-			r.End.Nanosecond()/1e3,
-			r.End.Sub(r.Start).Nanoseconds()/1e3,
+			r.Start.Nanoseconds()/1e3,
+			r.End.Nanoseconds()/1e3,
+			(r.End-r.Start).Nanoseconds()/1e3,
 			r.ImageIndex)))
 	}
 
@@ -101,4 +138,5 @@ func main() {
 
 	results := RunTest(CLIENTS, REQUESTS, UNIQUE)
 	Output(CLIENTS, REQUESTS, results, UNIQUE, OUTPUT_DIR)
+	fmt.Println("Done")
 }

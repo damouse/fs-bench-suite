@@ -220,10 +220,10 @@ def graph(all_data):
         runner.cleardir(p)
         aggregate_cdf(data, p)
 
-        # Aggregate CDFs
+        # Aggregate Boxplotss
         p = os.path.join(GRAPH_PATH, test, 'aggregate-boxplot')
         runner.cleardir(p)
-        aggregate_boxplot(data, None)
+        aggregate_boxplot(data, p)
 
 if __name__ == '__main__':
     all_data = load_macrobenchmarks()

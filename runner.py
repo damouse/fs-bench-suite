@@ -8,7 +8,7 @@ import matplotlib.pyplot as plot
 import pylab
 
 # The filesystem currently being tested
-FS_UNDER_TEST = 'zfs'
+FS_UNDER_TEST = 'ntfs'
 
 GO_PATH = '/usr/local/go/'
 WORKING_DIR = '/media/damouse/fsb/scratch'
@@ -30,6 +30,7 @@ IMGSERVER_RESULTS_PATH = RESULTS_PATH + '/apache/'
 # Each tuple here is a test. Format is (#clients, #requests)
 GOPG_PARAMS = [(1, 10), (1, 100), (1, 1000), (10, 10), (10, 100), (10, 1000)]
 IMG_PARAMS = [(1, 10), (1, 100), (1, 1000), (10, 10), (10, 100), (10, 1000)]
+# IMG_PARAMS = [(1, 10)]
 
 
 def compilation_test():
