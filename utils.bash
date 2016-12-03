@@ -14,21 +14,22 @@ zfs() {
 
 # ZFS to ext4
 ext() {
-  fuser -km /fsb
-  zpool destroy fsb
+  # fuser -km /fsb
+  # zpool destroy fsb
 
-  mkfs.ext4 /def/sda
-  mkdir /fsb
-  mount /dev/sda /fsb
-  mkdir /fsb/images
-  mkdir /fsb/scratch
+  # mkfs.ext4 /dev/sda
+  # mkdir /fsb
+  # mount /dev/sda /fsb
+  # mkdir /fsb/images
+  # mkdir /fsb/scratch
 
-  chown -R damouse:damouse /fsb
+  # chown -R damouse:damouse /fsb
 
   systemctl stop postgresql
   cp -aRv /var/lib/postgresql /fsb
   mv /var/lib/postgresql /var/lib/postgresql.bak
   ln -s /fsb/postgresql /var/lib/postgresql
+  chown postgres /var/lib/postgresql
   systemctl start postgresql
 }
 

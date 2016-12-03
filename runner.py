@@ -8,10 +8,10 @@ import matplotlib.pyplot as plot
 import pylab
 
 # The filesystem currently being tested
-FS_UNDER_TEST = 'ntfs'
+FS_UNDER_TEST = 'ext4'
 
 GO_PATH = '/usr/local/go/'
-WORKING_DIR = '/media/damouse/fsb/scratch'
+WORKING_DIR = '/fsb/scratch'
 IMAGE_DIR = WORKING_DIR.replace('scratch', 'images')
 
 if FS_UNDER_TEST == 'ntfs':
@@ -27,7 +27,6 @@ RESULTS_PATH = 'results/' + FS_UNDER_TEST
 GOPG_RESULTS_PATH = RESULTS_PATH + '/go-pg/'
 IMGSERVER_RESULTS_PATH = RESULTS_PATH + '/apache/'
 
-# Each tuple here is a test. Format is (#clients, #requests)
 NUM_CLIENTS = [1, 10, 20, 30, 40]
 TEST_TIME = 30  # seconds
 
@@ -87,4 +86,4 @@ def cleardir(d):
 if __name__ == '__main__':
     # compilation_test()
     webserver_test()
-    # imgserver_test()
+    imgserver_test()
