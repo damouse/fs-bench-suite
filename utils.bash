@@ -14,16 +14,16 @@ zfs() {
 
 # ZFS to ext4
 ext() {
-  # fuser -km /fsb
-  # zpool destroy fsb
+  fuser -km /fsb
+  zpool destroy fsb
 
-  # mkfs.ext4 /dev/sda
-  # mkdir /fsb
-  # mount /dev/sda /fsb
-  # mkdir /fsb/images
-  # mkdir /fsb/scratch
+  mkfs.ext4 /dev/sda
+  mkdir /fsb
+  mount /dev/sda /fsb
+  mkdir /fsb/images
+  mkdir /fsb/scratch
 
-  # chown -R damouse:damouse /fsb
+  chown -R damouse:damouse /fsb
 
   systemctl stop postgresql
   cp -aRv /var/lib/postgresql /fsb
@@ -38,6 +38,9 @@ reset() {
   rm /var/lib/postgresql
   mv /var/lib/postgresql.bak /var/lib/postgresql
   systemctl start postgresql
+
+  rm -rf /fsb
+  umount /dev/sda
 }
 
 case "$1" in
