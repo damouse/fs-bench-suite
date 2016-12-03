@@ -28,12 +28,7 @@ GOPG_RESULTS_PATH = RESULTS_PATH + '/go-pg/'
 IMGSERVER_RESULTS_PATH = RESULTS_PATH + '/apache/'
 
 # Each tuple here is a test. Format is (#clients, #requests)
-GOPG_PARAMS = [(1, 10), (1, 100), (1, 1000), (10, 10), (10, 100), (10, 1000)]
-# IMG_PARAMS = [(1, 10), (1, 100), (1, 1000), (10, 10), (10, 100), (10, 1000)]
-
-IMG_PARAMS = [1, 10, 100, 1000]
-# IMG_PARAMS = [(1, 10)]
-
+NUM_CLIENTS = [1, 10, 20, 30, 40]
 TEST_TIME = 30  # seconds
 
 
@@ -60,18 +55,18 @@ def webserver_test():
 
     if FS_UNDER_TEST == 'ntfs':
         subprocess.call("go build ./goserver", shell=True)
-        [subprocess.call(".\goserver.exe %s %s %s" % (x, y, GOPG_RESULTS_PATH), shell=True) for x, y in GOPG_PARAMS]
+        [subprocess.call(".\goserver.exe %s %s %s" % (x, TEST_TIME, GOPG_RESULTS_PATH), shell=True) for x in NUM_CLIENTS]
     else:
-        [subprocess.call("go run goserver/*.go %s %s %s" % (x, y, GOPG_RESULTS_PATH), shell=True) for x, y in GOPG_PARAMS]
+        [subprocess.call("go run goserver/*.go %s %s %s" % (x, TEST_TIME, GOPG_RESULTS_PATH), shell=True) for x in NUM_CLIENTS]
 
 
 def imgserver_test():
     cleardir(IMAGE_DIR)
     cleardir(IMGSERVER_RESULTS_PATH)
-    copies = IMG_PARAMS[-1]
+    copies = NUM_CLIENTS[-1]
     [shutil.copy('1.jpg', os.path.join(IMAGE_DIR, str(x) + '.jpg')) for x in range(copies)]
 
-    for x in IMG_PARAMS:
+    for x in NUM_CLIENTS:
         if FS_UNDER_TEST == 'ntfs':
             subprocess.call("go build ./imgclient", shell=True)
             subprocess.call(".\imgclient.exe %s %s true %s" % (x, TEST_TIME, IMGSERVER_RESULTS_PATH), shell=True)
@@ -91,5 +86,5 @@ def cleardir(d):
 
 if __name__ == '__main__':
     # compilation_test()
-    # webserver_test()
-    imgserver_test()
+    webserver_test()
+    # imgserver_test()
