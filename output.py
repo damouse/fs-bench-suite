@@ -17,9 +17,8 @@ import runner
 RESULTS_PATH = 'results'
 GRAPH_PATH = 'graphs'
 
-# Windows paths... why
-FILE_SEPERATOR = '\\'
-
+# Because thanks, windows
+FILE_SEPERATOR = '\\' if os.name == 'nt' else '/'
 
 class ResultRow():
 
