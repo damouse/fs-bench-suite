@@ -20,6 +20,7 @@ GRAPH_PATH = 'graphs'
 # Because thanks, windows
 FILE_SEPERATOR = '\\' if os.name == 'nt' else '/'
 
+
 class ResultRow():
 
     def __init__(self, raw):
@@ -71,7 +72,7 @@ def latency_scatter(result, output_subfolder=None):
     plot.xlim([0, result.end - result.start])
     plot.ylim([0, result.max_value])
 
-    plot.title('{} on {}: {} clients making {} requests'.format(result.pretty_name, result.fs, result.clients, result.requests))
+    plot.title('{} clients, {}, {}, {}s'.format(result.clients, result.pretty_name, result.fs, result.requests))
     plot.ylabel('Latency (ms)')
     plot.xlabel('Request Send Time (ms from start)')
 
@@ -87,7 +88,7 @@ def latency_cdf(result, output_subfolder=None):
     plot.ylim([0, 1])
     plot.grid()
 
-    plot.title('{} on {}: {} clients making {} requests'.format(result.pretty_name, result.fs, result.clients, result.requests))
+    plot.title('{} clients, {}, {}, {}s'.format(result.clients, result.pretty_name, result.fs, result.requests))
     plot.ylabel('Count')
     plot.xlabel('Latency (ms)')
 
@@ -119,7 +120,7 @@ def aggregate_cdf(results, output_subfolder=None):
 
         plot.ylabel('Count')
         plot.xlabel('Latency (ms)')
-        plot.title('{} Duration CDF: {} clients with {} requests each'.format(test_group[0].pretty_name, test_group[0].clients, test_group[0].requests))
+        plot.title('CDF for {} clients, {}, {}s'.format(test_group[0].clients, test_group[0].pretty_name, test_group[0].requests))
         plot.legend(loc='lower right')
 
         plot.xlim([0, max(map(lambda x: x.max_value, test_group))])
@@ -146,16 +147,20 @@ def aggregate_boxplot(results, output_subfolder=None):
             binned = [map(lambda x: x.diff_time, y) for y in binned]
             medians = [numpy.median(x) for x in binned]
 
-            plot.boxplot(binned, 0, '')
-            plot.plot([0] + medians)
+            line = plot.plot([0] + medians, label=fs.fs)
+            color = line[0].get_color()
+            boxes = plot.boxplot(binned, 0, '')
+
+            plot.setp(boxes['boxes'], color=line[0].get_color())
+            plot.setp(boxes['whiskers'], color=color)
+            plot.setp(boxes['caps'], color=color)
+            plot.setp(boxes['fliers'], color=color, marker='o')
+            plot.setp(boxes['medians'], color=color)
 
         plot.ylabel('Duration')
         plot.xlabel('Time (ms)')
-        plot.title('{} Duration CDF: {} clients with {} requests each'.format(test_group[0].pretty_name, test_group[0].clients, test_group[0].requests))
-        plot.legend(loc='lower right')
-
-        # plot.xlim([0, max(map(lambda x: x.max_value, test_group))])
-        # plot.ylim([0, 1.05])
+        plot.title('CDF for {} clients, {}, {}s'.format(test_group[0].clients, test_group[0].pretty_name, test_group[0].requests))
+        plot.legend(loc='upper left')
         plot.grid()
 
         # show_or_save(result, output_subfolder)
@@ -190,41 +195,61 @@ def show_or_save(result, output_subfolder):
         plot.savefig(os.path.join(output_subfolder, result.fs + '-' + result.name))
 
 
-def test_bars():
-    t = MacroResults('ext4', 'apache', os.path.join('results', 'ext4', 'apache', '10c-10r-shared'))
-    bins = numpy.linspace(t.start, t.end, 20)
-    binned = [filter(lambda x: maxx > x.start_time > minn, t.lines) for (minn, maxx) in zip(bins[:-1], bins[1:])]
-    binned = [map(lambda x: x.diff_time, y) for y in binned]
-    medians = [numpy.median(x) for x in binned]
+def test_weird():
+    result = MacroResults('ntfs', 'apache', os.path.join('results', 'ntfs', 'apache', '1c-30r-unique'))
 
-    plot.boxplot(binned, 0, '')
-    plot.plot([0] + medians)
+    for l in result.lines:
+        print l.raw
+
+    return
+
+    time = [x.start_time - result.start for x in result.lines]
+    lat = [x.diff_time for x in result.lines]
+
+    plot.scatter(time, lat, label="N=" + " M=")
+    plot.xlim([0, result.end - result.start])
+    plot.ylim([0, result.max_value])
+
+    plot.title('{} on {}: {} clients making {} requests'.format(result.pretty_name, result.fs, result.clients, result.requests))
+    plot.ylabel('Latency (ms)')
+    plot.xlabel('Request Send Time (ms from start)')
+
     plot.show()
+    plot.clf()
+
+    # bins = numpy.linspace(t.start, t.end, 20)
+    # binned = [filter(lambda x: maxx > x.start_time > minn, t.lines) for (minn, maxx) in zip(bins[:-1], bins[1:])]
+    # binned = [map(lambda x: x.diff_time, y) for y in binned]
+    # medians = [numpy.median(x) for x in binned]
+
+    # plot.boxplot(binned, 0, '')
+    # plot.plot([0] + medians)
+    # plot.show()
 
 
 def graph(all_data):
     for test in ['apache', 'go-pg']:
         data = filter(lambda x: x.test == test, all_data)
 
-        # Individual scatter plots
-        p = os.path.join(GRAPH_PATH, test, 'scatter')
-        runner.cleardir(p)
-        [latency_scatter(d, p) for d in data]
+        # # Individual scatter plots
+        # p = os.path.join(GRAPH_PATH, test, 'scatter')
+        # runner.cleardir(p)
+        # [latency_scatter(d, p) for d in data]
 
-        # Individual CDFs
-        p = os.path.join(GRAPH_PATH, test, 'cdf')
-        runner.cleardir(p)
-        [latency_cdf(d, p) for d in data]
+        # # Individual CDFs
+        # p = os.path.join(GRAPH_PATH, test, 'cdf')
+        # runner.cleardir(p)
+        # [latency_cdf(d, p) for d in data]
 
-        # Individual Boxplots
-        p = os.path.join(GRAPH_PATH, test, 'boxplot')
-        runner.cleardir(p)
-        [latency_boxplot(d, p) for d in data]
+        # # Individual Boxplots
+        # p = os.path.join(GRAPH_PATH, test, 'boxplot')
+        # runner.cleardir(p)
+        # [latency_boxplot(d, p) for d in data]
 
-        # Aggregate CDFs
-        p = os.path.join(GRAPH_PATH, test, 'aggregate-cdf')
-        runner.cleardir(p)
-        aggregate_cdf(data, p)
+        # # Aggregate CDFs
+        # p = os.path.join(GRAPH_PATH, test, 'aggregate-cdf')
+        # runner.cleardir(p)
+        # aggregate_cdf(data, p)
 
         # Aggregate Boxplotss
         p = os.path.join(GRAPH_PATH, test, 'aggregate-boxplot')
@@ -235,4 +260,4 @@ def graph(all_data):
 if __name__ == '__main__':
     all_data = load_macrobenchmarks()
     graph(all_data)
-    # test_bars()
+    # test_weird()
