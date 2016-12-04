@@ -34,7 +34,7 @@ class ResultRow():
         self.diff_time = float(split[3]) / 1000
 
 
-class TestResults():
+class MacroResults():
 
     def __init__(self, fs, test, filepath):
         self.fs = fs
@@ -171,8 +171,15 @@ def aggregate_boxplot(results, output_subfolder=None):
 
 
 def load_macrobenchmarks():
-    return [TestResults(fs, test, file)
+    return [MacroResults(fs, test, file)
             for test in ['apache', 'go-pg']
+            for fs in ['ntfs', 'ext4', 'zfs']
+            for file in glob.glob(os.path.join(RESULTS_PATH, fs, test, '*'))]
+
+
+def load_microbenchmarks():
+    return [MicroResults(fs, test, file)
+            for test in ['microbenchmarks']
             for fs in ['ntfs', 'ext4', 'zfs']
             for file in glob.glob(os.path.join(RESULTS_PATH, fs, test, '*'))]
 
@@ -185,7 +192,7 @@ def show_or_save(result, output_subfolder):
 
 
 def test_bars():
-    t = TestResults('ext4', 'apache', os.path.join('results', 'ext4', 'apache', '10c-10r-shared'))
+    t = MacroResults('ext4', 'apache', os.path.join('results', 'ext4', 'apache', '10c-10r-shared'))
     bins = numpy.linspace(t.start, t.end, 20)
     binned = [filter(lambda x: maxx > x.start_time > minn, t.lines) for (minn, maxx) in zip(bins[:-1], bins[1:])]
     binned = [map(lambda x: x.diff_time, y) for y in binned]
@@ -224,6 +231,7 @@ def graph(all_data):
         p = os.path.join(GRAPH_PATH, test, 'aggregate-boxplot')
         runner.cleardir(p)
         aggregate_boxplot(data, p)
+
 
 if __name__ == '__main__':
     all_data = load_macrobenchmarks()
