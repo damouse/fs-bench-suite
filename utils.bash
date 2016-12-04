@@ -2,14 +2,20 @@
 
 # Ext4 to zfs
 zfs() {
-  echo 'hi'
-  rm -rf /media/damouse/fsb
+  reset
+  zpool create fsb sda -f 
+
+  mkdir /fsb/images
+  mkdir /fsb/scratch
+  chown -R damouse:damouse /fsb
 
   systemctl stop postgresql
-  mv /var/lib/postgresql.bak /var/lib/postgresql
   cp -aRv /var/lib/postgresql /fsb
+  mv /var/lib/postgresql /var/lib/postgresql.bak
   ln -s /fsb/postgresql /var/lib/postgresql
+  chown postgres /var/lib/postgresql
   systemctl start postgresql
+  systemctl restart apache2
 }
 
 # ZFS to ext4
@@ -31,6 +37,7 @@ ext() {
   ln -s /fsb/postgresql /var/lib/postgresql
   chown postgres /var/lib/postgresql
   systemctl start postgresql
+  systemctl restart apache2
 }
 
 reset() {
