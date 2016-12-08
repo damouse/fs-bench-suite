@@ -8,7 +8,7 @@ import matplotlib.pyplot as plot
 import pylab
 
 # The filesystem currently being tested
-FS_UNDER_TEST = 'ext4'
+FS_UNDER_TEST = 'zfs'
 
 GO_PATH = '/usr/local/go/'
 WORKING_DIR = '/fsb/scratch'
