@@ -73,7 +73,7 @@ def latency_scatter(result, output_subfolder):
 
     plot.title('{} clients, {}, {}, {}s'.format(result.clients, result.pretty_name, result.fs, result.requests))
     plot.ylabel('Latency (ms)')
-    plot.xlabel('Request Send Time (ms from start)')
+    plot.xlabel('Time (ms)')
 
     show_or_save(result, output_subfolder)
     plot.clf()
@@ -101,35 +101,11 @@ def latency_boxplot(result, output_subfolder=None):
     binned = [map(lambda x: x.diff_time, y) for y in binned]
 
     plot.boxplot(binned, 0, '')
-    plot.ylabel('Latency')
-    plot.xlabel('Bin (1000ms intervals)')
-    plot.title('Boxed latency for {} clients, {}, {}s'.format(test_group[0].clients, test_group[0].pretty_name, test_group[0].requests))
+    plot.ylabel('Request Latency (ms)')
+    plot.xlabel('Time (s)')
+    plot.title('Boxed latency for {} clients, {}, {}s'.format(result.clients, result.pretty_name, result.requests))
     show_or_save(result, output_subfolder)
     plot.clf()
-
-
-def aggregate_client_cdf(results, output_subfolder):
-    for test_group in zip(*[filter(lambda x: x.fs == fs, results) for fs in ['ntfs', 'ext4', 'zfs']]):
-        for fs in test_group:
-            latencies = map(lambda x: x.diff_time, fs.lines)
-            cdfx = numpy.sort(latencies)
-            plot.plot(cdfx, numpy.linspace(0, 1, len(cdfx)), label=fs.fs)
-
-        plot.ylabel('Count')
-        plot.xlabel('Latency (ms)')
-        plot.title('Boxed latency for {} clients, {}, {}s'.format(test_group[0].clients, test_group[0].pretty_name, test_group[0].requests))
-        plot.legend(loc='lower right')
-
-        plot.xlim([0, max(map(lambda x: x.max_value, test_group))])
-        plot.ylim([0, 1.05])
-        plot.grid()
-
-        if test_group[0].test == 'apache':
-            plot.savefig(os.path.join(output_subfolder, '{}-{}-{}'.format(test_group[0].clients, test_group[0].requests, test_group[0].unique)))
-        else:
-            plot.savefig(os.path.join(output_subfolder, '{}-{}'.format(test_group[0].clients, test_group[0].requests)))
-
-        plot.clf()
 
 
 def aggregate_boxplot(results, output_subfolder):
@@ -150,10 +126,39 @@ def aggregate_boxplot(results, output_subfolder):
             plot.setp(boxes['fliers'], color=color, marker='o')
             plot.setp(boxes['medians'], color=color)
 
-        plot.ylabel('Latency')
-        plot.xlabel('Bin (1000ms intervals)')
-        plot.title('CDF for {} clients, {}, {}s'.format(test_group[0].clients, test_group[0].pretty_name, test_group[0].requests))
+        plot.ylabel('Request Latency (ms)')
+        plot.xlabel('Time (s)')
+        plot.title('Boxed latency for {} clients, {}, {}s'.format(test_group[0].clients, test_group[0].pretty_name, test_group[0].requests))
         plot.legend(loc='upper left')
+
+        if test_group[0].clients == 40 and test_group[0].test == 'apache':
+            plot.ylim([02, 200])
+
+        plot.grid()
+
+        if test_group[0].test == 'apache':
+            plot.savefig(os.path.join(output_subfolder, '{}-{}-{}'.format(test_group[0].clients, test_group[0].requests, test_group[0].unique)))
+        else:
+            plot.savefig(os.path.join(output_subfolder, '{}-{}'.format(test_group[0].clients, test_group[0].requests)))
+
+        plot.clf()
+
+
+def aggregate_client_cdf(results, output_subfolder):
+    for test_group in zip(*[filter(lambda x: x.fs == fs, results) for fs in ['ntfs', 'ext4', 'zfs']]):
+        for fs in test_group:
+            latencies = map(lambda x: x.diff_time, fs.lines)
+            cdfx = numpy.sort(latencies)
+            plot.plot(cdfx, numpy.linspace(0, 1, len(cdfx)), label=fs.fs)
+
+        plot.ylabel('Count (%)')
+        plot.xlabel('Request Latency (ms)')
+        plot.title('CDF for {} clients, {}, {}s'.format(test_group[0].clients, test_group[0].pretty_name, test_group[0].requests))
+        plot.legend(loc='lower right')
+
+        plot.xlim([0, max(map(lambda x: x.max_value, test_group))])
+        # plot.xlim([0, 100])
+        plot.ylim([0, 1.05])
         plot.grid()
 
         if test_group[0].test == 'apache':
@@ -184,12 +189,12 @@ def aggregate_platform_cdf(results, output_subfolder):
             cdfx = numpy.sort(latencies)
             plot.plot(cdfx, numpy.linspace(0, 1, len(cdfx)), label=str(fs.clients) + " clients")
 
-        plot.ylabel('Count')
+        plot.ylabel('Count (%)')
         plot.xlabel('Latency (ms)')
         plot.title('CDF for varying Clients, {} on {}, {}s'.format(test_group[0].pretty_name, test_group[0].fs, test_group[0].requests))
         plot.legend(loc='lower right')
 
-        plot.xlim([0, max(map(lambda x: x.max_value, test_group))])
+        # plot.xlim([0, 100])
         plot.ylim([0, 1.05])
         plot.grid()
 
@@ -228,20 +233,20 @@ def graph(all_data):
     for test in ['apache', 'go-pg']:
         data = filter(lambda x: x.test == test, all_data)
 
-        # Individual scatter plots
-        p = os.path.join(GRAPH_PATH, test, 'scatter')
-        runner.cleardir(p)
-        [latency_scatter(d, p) for d in data]
+        # # Individual scatter plots
+        # p = os.path.join(GRAPH_PATH, test, 'scatter')
+        # runner.cleardir(p)
+        # [latency_scatter(d, p) for d in data]
 
-        # Individual CDFs
-        p = os.path.join(GRAPH_PATH, test, 'cdf')
-        runner.cleardir(p)
-        [latency_cdf(d, p) for d in data]
+        # # Individual CDFs
+        # p = os.path.join(GRAPH_PATH, test, 'cdf')
+        # runner.cleardir(p)
+        # [latency_cdf(d, p) for d in data]
 
-        # Individual Boxplots
-        p = os.path.join(GRAPH_PATH, test, 'boxplot')
-        runner.cleardir(p)
-        [latency_boxplot(d, p) for d in data]
+        # # Individual Boxplots
+        # p = os.path.join(GRAPH_PATH, test, 'boxplot')
+        # runner.cleardir(p)
+        # [latency_boxplot(d, p) for d in data]
 
         # Aggregate CDFs per # clients
         p = os.path.join(GRAPH_PATH, test, 'aggregate-client-cdf')
@@ -249,14 +254,14 @@ def graph(all_data):
         aggregate_client_cdf(data, p)
 
         # Aggregate CDFs per fs
-        p = os.path.join(GRAPH_PATH, test, 'aggregate-fs-cdf')
-        runner.cleardir(p)
-        aggregate_platform_cdf(data, p)
+        # p = os.path.join(GRAPH_PATH, test, 'aggregate-fs-cdf')
+        # runner.cleardir(p)
+        # aggregate_platform_cdf(data, p)
 
         # Aggregate Boxplotss
-        p = os.path.join(GRAPH_PATH, test, 'aggregate-boxplot')
-        runner.cleardir(p)
-        aggregate_boxplot(data, p)
+        # p = os.path.join(GRAPH_PATH, test, 'aggregate-boxplot')
+        # runner.cleardir(p)
+        # aggregate_boxplot(data, p)
 
 
 if __name__ == '__main__':
