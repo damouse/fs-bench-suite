@@ -8,7 +8,7 @@ import matplotlib.pyplot as plot
 import pylab
 
 # The filesystem currently being tested
-FS_UNDER_TEST = 'zfs'
+FS_UNDER_TEST = 'ntfs'
 
 GO_PATH = '/usr/local/go/'
 WORKING_DIR = '/fsb/scratch'
@@ -51,12 +51,7 @@ def compilation_test():
 
 def webserver_test():
     cleardir(GOPG_RESULTS_PATH)
-
-    if FS_UNDER_TEST == 'ntfs':
-        subprocess.call("go build ./goserver", shell=True)
-        [subprocess.call(".\goserver.exe %s %s %s" % (x, TEST_TIME, GOPG_RESULTS_PATH), shell=True) for x in NUM_CLIENTS]
-    else:
-        [subprocess.call("go run goserver/*.go %s %s %s" % (x, TEST_TIME, GOPG_RESULTS_PATH), shell=True) for x in NUM_CLIENTS]
+    [subprocess.call("go run rest.go %s %s %s" % (x, TEST_TIME, GOPG_RESULTS_PATH), shell=True) for x in NUM_CLIENTS]
 
 
 def imgserver_test():
@@ -86,4 +81,4 @@ def cleardir(d):
 if __name__ == '__main__':
     # compilation_test()
     webserver_test()
-    imgserver_test()
+    # imgserver_test()
