@@ -1,17 +1,4 @@
-package main
-
-import (
-	"bytes"
-	"fmt"
-	"math/rand"
-	"net/http"
-	"os"
-	"strconv"
-	"time"
-)
-
-const (
-	PCT_POST = 0.5 // Percentage of calls that are post requests
+lls that are post requests
 	URL      = "http://localhost:8080/reminders"
 )
 
