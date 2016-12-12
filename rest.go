@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"./shared"
@@ -15,6 +16,8 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
+
+var payload = bytes.NewBuffer([]byte(`{"message":"Buy cheese and bread for breakfast."}`))
 
 type Reminder struct {
 	Id        int64     `json:"id"`
@@ -52,7 +55,7 @@ func StartServer() net.Listener {
 	shared.CheckErr(err)
 	api.SetApp(router)
 
-	l, err := net.Listen("tcp", ":8080")
+	l, err := net.Listen("tcp", ":8081")
 	shared.CheckErr(err)
 
 	go func() {
@@ -99,7 +102,7 @@ func Query() *shared.Result {
 	}
 
 	if rand.Float32() > shared.PCT_POST {
-		req, err = http.Post(shared.WEBSERVER_URL, "application/json", bytes.NewBuffer([]byte(`{"message":"Buy cheese and bread for breakfast."}`)))
+		req, err = http.Post(shared.WEBSERVER_URL, "application/json", payload)
 		res.CallType = "Post"
 	} else {
 		req, err = http.Get(shared.WEBSERVER_URL)
@@ -107,8 +110,10 @@ func Query() *shared.Result {
 	}
 
 	res.End = shared.GetTime()
+	shared.CheckErr(err)
 
 	if err != nil {
+		shared.CheckErr(err)
 		return nil
 	} else {
 		req.Body.Close()
@@ -117,27 +122,41 @@ func Query() *shared.Result {
 }
 
 func RunTest(clients int, seconds int) chan *shared.Result {
+	// Effectively make the channel's buffer infinite-- dont want it to block
 	results := make(chan *shared.Result, seconds*100000*clients)
 	closed := false
+	var wg sync.WaitGroup
+	wg.Add(clients)
 
 	for i := 0; i < clients; i++ {
 		go func(j int) {
+			var res []*shared.Result
+
 			for {
 				if r := Query(); r == nil {
 					continue
 				} else if closed {
+					// Its time to stop issueing requests. Push results onto the channel
+					for _, r := range res {
+						results <- r
+					}
+
+					// Signal close and return
+					wg.Done()
 					return
+
 				} else {
 					r.ClientNum = j
-					results <- r
+					res = append(res, r)
 				}
 			}
 		}(i)
 	}
 
 	<-time.After(time.Duration(seconds) * time.Second)
-	close(results)
 	closed = true
+	wg.Wait()
+	close(results)
 	return results
 }
 
@@ -172,4 +191,5 @@ func main() {
 	server.Close()
 
 	Output(CLIENTS, REQUESTS, results, OUTPUT_DIR)
+	os.Exit(0)
 }

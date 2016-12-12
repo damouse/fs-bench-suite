@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	PCT_POST      = 0.5 // Percentage of calls that are post requests
-	WEBSERVER_URL = "http://localhost:8080/reminders"
+	PCT_POST      = 1 // 0.5 // Percentage of calls that are post requests
+	WEBSERVER_URL = "http://localhost:8081/reminders"
 	IMGSERVER_URL = "http://localhost/"
 )
 
@@ -58,7 +58,7 @@ func GetTime() int64 {
 		var now int64
 		syscall.Syscall(WinPreciseFileTime, 1, uintptr(unsafe.Pointer(&now)), 0, 0)
 
-		// Convert to us. GetSystemTimePrecise returns results in
+		// GetSystemTimePreciseAsFileTime returns results in 100s of ns-- convert to us
 		return now / 10
 	} else {
 		return int64(time.Now().Nanosecond()) / 1e3
