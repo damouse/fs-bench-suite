@@ -238,30 +238,30 @@ def graph(all_data):
         runner.cleardir(p)
         [latency_scatter(d, p) for d in data]
 
-        # Individual CDFs
-        p = os.path.join(GRAPH_PATH, test, 'cdf')
-        runner.cleardir(p)
-        [latency_cdf(d, p) for d in data]
+        # # Individual CDFs
+        # p = os.path.join(GRAPH_PATH, test, 'cdf')
+        # runner.cleardir(p)
+        # [latency_cdf(d, p) for d in data]
 
-        # Individual Boxplots
-        p = os.path.join(GRAPH_PATH, test, 'boxplot')
-        runner.cleardir(p)
-        [latency_boxplot(d, p) for d in data]
+        # # Aggregate CDFs per # clients
+        # p = os.path.join(GRAPH_PATH, test, 'aggregate-client-cdf')
+        # runner.cleardir(p)
+        # aggregate_client_cdf(data, p)
 
-        # Aggregate CDFs per # clients
-        p = os.path.join(GRAPH_PATH, test, 'aggregate-client-cdf')
-        runner.cleardir(p)
-        aggregate_client_cdf(data, p)
+        # # Aggregate CDFs per fs
+        # p = os.path.join(GRAPH_PATH, test, 'aggregate-fs-cdf')
+        # runner.cleardir(p)
+        # aggregate_platform_cdf(data, p)
 
-        # Aggregate CDFs per fs
-        p = os.path.join(GRAPH_PATH, test, 'aggregate-fs-cdf')
-        runner.cleardir(p)
-        aggregate_platform_cdf(data, p)
+        # # Aggregate Boxplotss
+        # p = os.path.join(GRAPH_PATH, test, 'aggregate-boxplot')
+        # runner.cleardir(p)
+        # aggregate_boxplot(data, p)
 
-        # Aggregate Boxplotss
-        p = os.path.join(GRAPH_PATH, test, 'aggregate-boxplot')
-        runner.cleardir(p)
-        aggregate_boxplot(data, p)
+        # # Individual Boxplots
+        # p = os.path.join(GRAPH_PATH, test, 'boxplot')
+        # runner.cleardir(p)
+        # [latency_boxplot(d, p) for d in data]
 
 
 if __name__ == '__main__':

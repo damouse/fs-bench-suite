@@ -9,14 +9,17 @@ import (
 )
 
 const (
-	PCT_POST      = 1 // 0.5 // Percentage of calls that are post requests
-	WEBSERVER_URL = "http://localhost:8081/reminders"
-	IMGSERVER_URL = "http://localhost/"
+	PCT_POST           = 1 // 0.5 // Percentage of calls that are post requests
+	WEBSERVER_TEMPLATE = "http://localhost:%s/reminders"
+	IMGSERVER_URL      = "http://localhost/"
 )
 
 var (
 	WinPreciseFileTime uintptr
 	Win32              syscall.Handle
+
+	PORT          = "12345"
+	WEBSERVER_URL string
 )
 
 type Result struct {
@@ -24,6 +27,10 @@ type Result struct {
 	Start     int64
 	End       int64
 	CallType  string
+}
+
+func init() {
+	WEBSERVER_URL = fmt.Sprintf(WEBSERVER_TEMPLATE, PORT)
 }
 
 func CheckErr(err error) {

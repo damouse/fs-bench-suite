@@ -91,5 +91,12 @@ This is "TCP/IP Port Exhaustion," as documented [here](https://msdn.microsoft.co
 
 It is possible to reduce the time that a port stays "in use" through another registry edit, but you can't set it less than 30s, so no dice. 
 
-Experimenting with changing the port number between tests seems to work. Try this next. 
+Experimenting with changing the port number between tests seemed to work, but only delays the problem. 
 
+Still cant get rid of the noise on Windows! Watching task manager shows Windows Network Realtime Inspection Service spike way up along with the Antimalware Service Executable. I got one round of really clean results and not since. Was it because the firewall was turned off?
+
+I'm trying to run the tests again with the following: 
+
+- Windows Firewall off
+- Windows Defender off
+- Killing defender from starting entirely by editting the registry as shown [here](https://answers.microsoft.com/en-us/protect/forum/protect_defender-protect_start/how-to-kill-antimalware-service-executable/b5ce5b46-a65b-460c-b4cd-e2cca50358cf?page=1).

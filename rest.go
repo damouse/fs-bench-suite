@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -17,7 +16,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
-var payload = bytes.NewBuffer([]byte(`{"message":"Buy cheese and bread for breakfast."}`))
+// var payload = bytes.NewBuffer([]byte(`{"message":"Buy cheese and bread for breakfast."}`))
 
 type Reminder struct {
 	Id        int64     `json:"id"`
@@ -55,11 +54,12 @@ func StartServer() net.Listener {
 	shared.CheckErr(err)
 	api.SetApp(router)
 
-	l, err := net.Listen("tcp", ":8081")
+	l, err := net.Listen("tcp", ":"+shared.PORT)
 	shared.CheckErr(err)
 
 	go func() {
 		http.Serve(l, api.MakeHandler())
+		// shared.CheckErr(e)
 	}()
 
 	return l
@@ -101,24 +101,18 @@ func Query() *shared.Result {
 		Start: shared.GetTime(),
 	}
 
-	if rand.Float32() > shared.PCT_POST {
-		req, err = http.Post(shared.WEBSERVER_URL, "application/json", payload)
-		res.CallType = "Post"
-	} else {
-		req, err = http.Get(shared.WEBSERVER_URL)
-		res.CallType = "Get"
-	}
+	// if rand.Float32() > shared.PCT_POST {
+	req, err = http.Post(shared.WEBSERVER_URL, "application/json", bytes.NewBuffer([]byte(`{"message":"Buy cheese and bread for breakfast."}`)))
+	res.CallType = "Post"
+	// } else {
+	// 	req, err = http.Get(shared.WEBSERVER_URL)
+	// 	res.CallType = "Get"
+	// }
 
 	res.End = shared.GetTime()
 	shared.CheckErr(err)
-
-	if err != nil {
-		shared.CheckErr(err)
-		return nil
-	} else {
-		req.Body.Close()
-		return res
-	}
+	req.Body.Close()
+	return res
 }
 
 func RunTest(clients int, seconds int) chan *shared.Result {
@@ -185,6 +179,8 @@ func main() {
 	REQUESTS, e := strconv.Atoi(os.Args[2])
 	shared.CheckErr(e)
 	OUTPUT_DIR := os.Args[3]
+
+	fmt.Printf("Webserver %v clients %v seconds, output: %v\n", CLIENTS, REQUESTS, OUTPUT_DIR)
 
 	server := StartServer()
 	results := RunTest(CLIENTS, REQUESTS)
