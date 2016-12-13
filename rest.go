@@ -142,6 +142,7 @@ func RunTest(clients int, seconds int) chan *shared.Result {
 				} else {
 					r.ClientNum = j
 					res = append(res, r)
+					time.Sleep(20 * time.Millisecond)
 				}
 			}
 		}(i)
