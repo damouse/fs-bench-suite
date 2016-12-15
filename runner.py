@@ -27,7 +27,7 @@ RESULTS_PATH = 'results/' + FS_UNDER_TEST
 GOPG_RESULTS_PATH = RESULTS_PATH + '/go-pg/'
 IMGSERVER_RESULTS_PATH = RESULTS_PATH + '/apache/'
 
-NUM_CLIENTS = [1, 10, 20, 30]
+NUM_CLIENTS = [1, 10, 20]
 TEST_TIME = 30  # seconds
 
 
@@ -60,14 +60,6 @@ def imgserver_test():
     copies = NUM_CLIENTS[-1]
     [shutil.copy('1.jpg', os.path.join(IMAGE_DIR, str(x) + '.jpg')) for x in range(copies)]
     [subprocess.call("go run imgclient.go %s %s %s" % (x, TEST_TIME, IMGSERVER_RESULTS_PATH), shell=True) for x in NUM_CLIENTS]
-
-    # for x in NUM_CLIENTS:
-    #     if FS_UNDER_TEST == 'ntfs':
-    #         subprocess.call("go build ./imgclient", shell=True)
-    #         subprocess.call(".\imgclient.exe %s %s true %s" % (x, TEST_TIME, IMGSERVER_RESULTS_PATH), shell=True)
-    #     else:
-    #         subprocess.call("go run imgclient/*.go %s %s true %s" % (x, TEST_TIME, IMGSERVER_RESULTS_PATH), shell=True)
-    #         subprocess.call("go run imgclient/*.go %s %s false %s" % (x, TEST_TIME, IMGSERVER_RESULTS_PATH), shell=True)
 
 
 def cleardir(d):
