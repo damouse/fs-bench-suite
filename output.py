@@ -48,9 +48,9 @@ class MacroResults():
         self.requests = int(split[1].replace('r', ''))
         self.pretty_name = 'Go Webserver'
 
-        if self.test is 'apache':
-            self.unique = split[2]
-            self.pretty_name = 'Apache'
+        # if self.test is 'apache':
+        #     self.unique = split[2]
+        self.pretty_name = 'Apache'
 
         # Load the data
         with open(filepath, 'r') as f:
@@ -136,10 +136,10 @@ def aggregate_boxplot(results, output_subfolder):
 
         plot.grid()
 
-        if test_group[0].test == 'apache':
-            plot.savefig(os.path.join(output_subfolder, '{}-{}-{}'.format(test_group[0].clients, test_group[0].requests, test_group[0].unique)))
-        else:
-            plot.savefig(os.path.join(output_subfolder, '{}-{}'.format(test_group[0].clients, test_group[0].requests)))
+        # if test_group[0].test == 'apache':
+        #     plot.savefig(os.path.join(output_subfolder, '{}-{}-{}'.format(test_group[0].clients, test_group[0].requests, test_group[0].unique)))
+        # else:
+        plot.savefig(os.path.join(output_subfolder, '{}-{}'.format(test_group[0].clients, test_group[0].requests)))
 
         plot.clf()
 
@@ -161,10 +161,10 @@ def aggregate_client_cdf(results, output_subfolder):
         plot.ylim([0, 1.05])
         plot.grid()
 
-        if test_group[0].test == 'apache':
-            plot.savefig(os.path.join(output_subfolder, '{}-{}-{}'.format(test_group[0].clients, test_group[0].requests, test_group[0].unique)))
-        else:
-            plot.savefig(os.path.join(output_subfolder, '{}-{}'.format(test_group[0].clients, test_group[0].requests)))
+        # if test_group[0].test == 'apache':
+        #     plot.savefig(os.path.join(output_subfolder, '{}-{}-{}'.format(test_group[0].clients, test_group[0].requests, test_group[0].unique)))
+        # else:
+        plot.savefig(os.path.join(output_subfolder, '{}-{}'.format(test_group[0].clients, test_group[0].requests)))
 
         plot.clf()
 
@@ -176,12 +176,13 @@ def aggregate_platform_cdf(results, output_subfolder):
         for test_slice in [filter(lambda x: x.test == test, fs_slice) for test in ['go-pg', 'apache']]:
             if len(test_slice) == 0:
                 continue
+            tests.append(test_slice)
 
-            if test_slice[0].test == 'apache':
-                tests.append(filter(lambda x: 'unique' in x.name, test_slice))
-                tests.append(filter(lambda x: 'unique' not in x.name, test_slice))
-            else:
-                tests.append(test_slice)
+            # if test_slice[0].test == 'apache':
+            #     tests.append(filter(lambda x: 'unique' in x.name, test_slice))
+            #     tests.append(filter(lambda x: 'unique' not in x.name, test_slice))
+            # else:
+            #     tests.append(test_slice)
 
     for test_group in tests:
         for fs in sorted(test_group, key=lambda x: x.clients):
@@ -198,10 +199,10 @@ def aggregate_platform_cdf(results, output_subfolder):
         plot.ylim([0, 1.05])
         plot.grid()
 
-        if test_group[0].test == 'apache':
-            plot.savefig(os.path.join(output_subfolder, '{}-{}'.format(test_group[0].fs, test_group[0].unique)))
-        else:
-            plot.savefig(os.path.join(output_subfolder, '{}'.format(test_group[0].fs)))
+        # if test_group[0].test == 'apache':
+        #     plot.savefig(os.path.join(output_subfolder, '{}-{}'.format(test_group[0].fs, test_group[0].unique)))
+        # else:
+        plot.savefig(os.path.join(output_subfolder, '{}'.format(test_group[0].fs)))
 
         plot.clf()
 
