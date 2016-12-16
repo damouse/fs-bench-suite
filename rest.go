@@ -97,19 +97,13 @@ func Query() *shared.Result {
 	var req *http.Response
 	var err error
 
-	res := &shared.Result{
-		Start: shared.GetTime(),
-	}
-
-	// if rand.Float32() > shared.PCT_POST {
+	res := &shared.Result{}
+	res.Start = shared.GetTime()
 	req, err = http.Post(shared.WEBSERVER_URL, "application/json", bytes.NewBuffer([]byte(`{"message":"Buy cheese and bread for breakfast."}`)))
-	res.CallType = "Post"
-	// } else {
-	// 	req, err = http.Get(shared.WEBSERVER_URL)
-	// 	res.CallType = "Get"
-	// }
-
 	res.End = shared.GetTime()
+
+	// fmt.Printf("")
+
 	shared.CheckErr(err)
 	req.Body.Close()
 	return res
@@ -189,4 +183,14 @@ func main() {
 
 	Output(CLIENTS, REQUESTS, results, OUTPUT_DIR)
 	os.Exit(0)
+
+	// for i := 0; i < 100; i++ {
+	// 	a := shared.GetTime()
+	// 	c := time.Now()
+	// 	time.Sleep(1 * time.Microsecond)
+	// 	d := time.Now()
+	// 	b := shared.GetTime()
+
+	// 	fmt.Printf("%d %v, %v\n", i, b-a, d.Sub(c).Nanoseconds())
+	// }
 }

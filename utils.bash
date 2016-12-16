@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Call with: sudo bash utils.bash
+
 # Ext4 to zfs
 zfs() {
   reset
@@ -20,14 +22,14 @@ zfs() {
 
 # ZFS to ext4
 ext() {
-  fuser -km /fsb
-  zpool destroy fsb
+  # fuser -km /fsb
+  # zpool destroy fsb
 
-  mkfs.ext4 /dev/sda
-  mkdir /fsb
-  mount /dev/sda /fsb
-  mkdir /fsb/images
-  mkdir /fsb/scratch
+  # mkfs.ext4 /dev/sda
+  # mkdir /fsb
+  # mount /dev/sda /fsb
+  # mkdir /fsb/images
+  # mkdir /fsb/scratch
 
   chown -R damouse:damouse /fsb
 

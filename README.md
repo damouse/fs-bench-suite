@@ -102,3 +102,13 @@ I'm trying to run the tests again with the following:
 - Killing defender from starting entirely by editting the registry as shown [here](https://answers.microsoft.com/en-us/protect/forum/protect_defender-protect_start/how-to-kill-antimalware-service-executable/b5ce5b46-a65b-460c-b4cd-e2cca50358cf?page=1).
 
 I ended up setting TcpTimedWaitDelay to its minimum value, 30s, as documented [here](https://technet.microsoft.com/en-us/library/cc938217.aspx).
+
+Did this on ubuntu with the following: 
+
+```
+# Update the system live
+sudo sysctl -w net.ipv4.ip_local_port_range="1024 65000"
+
+# Add this line to /etc/sysctl.conf
+net.ipv4.ip_local_port_range = 1024 65000
+```

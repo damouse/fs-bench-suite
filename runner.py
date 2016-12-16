@@ -8,7 +8,7 @@ import matplotlib.pyplot as plot
 import pylab
 
 # The filesystem currently being tested
-FS_UNDER_TEST = 'ntfs'
+FS_UNDER_TEST = 'ext4'
 
 GO_PATH = '/usr/local/go/'
 WORKING_DIR = '/fsb/scratch'
@@ -27,7 +27,8 @@ RESULTS_PATH = 'results/' + FS_UNDER_TEST
 GOPG_RESULTS_PATH = RESULTS_PATH + '/go-pg/'
 IMGSERVER_RESULTS_PATH = RESULTS_PATH + '/apache/'
 
-NUM_CLIENTS = [1, 10, 20]
+# NUM_CLIENTS = [1, 10, 20, 30]
+NUM_CLIENTS = [30]
 TEST_TIME = 30  # seconds
 
 
@@ -68,7 +69,6 @@ def cleardir(d):
     else:
         for f in glob.glob(os.path.join(d, '*')):
             os.remove(f)
-
 
 if __name__ == '__main__':
     # compilation_test()

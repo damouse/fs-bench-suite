@@ -1,11 +1,14 @@
 package shared
 
+// The commented out portions are windows refs that dont compile on linux well,
+// or at all
+
 import (
 	"fmt"
 	"runtime"
-	"syscall"
+	// _"syscall"
 	"time"
-	"unsafe"
+	// _"unsafe"
 )
 
 const (
@@ -16,7 +19,7 @@ const (
 
 var (
 	WinPreciseFileTime uintptr
-	Win32              syscall.Handle
+	// Win32              syscall.Handle
 
 	PORT          = "12345"
 	WEBSERVER_URL string
@@ -45,29 +48,33 @@ func LoadWindowsTimer() error {
 		return nil
 	}
 
-	var e error
-	Win32, e = syscall.LoadLibrary("kernel32.dll")
-	CheckErr(e)
+	/*
+		var e error
+		Win32, e = syscall.LoadLibrary("kernel32.dll")
+		CheckErr(e)
 
-	WinPreciseFileTime, e = syscall.GetProcAddress(Win32, "GetSystemTimePreciseAsFileTime")
-	CheckErr(e)
+		WinPreciseFileTime, e = syscall.GetProcAddress(Win32, "GetSystemTimePreciseAsFileTime")
+		CheckErr(e)
 
-	if WinPreciseFileTime == 0 {
-		return fmt.Errorf("Unable to get precise system time")
-	} else {
-		return nil
-	}
+		if WinPreciseFileTime == 0 {
+			return fmt.Errorf("Unable to get precise system time")
+		} else {
+			return nil
+		}
+	*/
+
+	return nil
 }
 
 // Returns UTC time in microseconds. If on windows, behavior is undefined if LoadWindowsTimer has not already been called
 func GetTime() int64 {
 	if runtime.GOOS == "windows" {
 		var now int64
-		syscall.Syscall(WinPreciseFileTime, 1, uintptr(unsafe.Pointer(&now)), 0, 0)
+		// syscall.Syscall(WinPreciseFileTime, 1, uintptr(unsafe.Pointer(&now)), 0, 0)
 
 		// GetSystemTimePreciseAsFileTime returns results in 100s of ns-- convert to us
 		return now / 10
 	} else {
-		return int64(time.Now().Nanosecond()) / 1e3
+		return time.Now().UnixNano() / 1e3
 	}
 }

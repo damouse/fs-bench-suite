@@ -46,11 +46,11 @@ class MacroResults():
         split = self.name.split('-')
         self.clients = int(split[0].replace('c', ''))
         self.requests = int(split[1].replace('r', ''))
-        self.pretty_name = 'Go Webserver'
+        self.pretty_name = 'Apache' if self.test is 'apache' else 'Go Webserver'
 
         # if self.test is 'apache':
         #     self.unique = split[2]
-        self.pretty_name = 'Apache'
+        # self.pretty_name = 'Apache'
 
         # Load the data
         with open(filepath, 'r') as f:
