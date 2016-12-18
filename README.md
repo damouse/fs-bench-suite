@@ -112,3 +112,80 @@ sudo sysctl -w net.ipv4.ip_local_port_range="1024 65000"
 # Add this line to /etc/sysctl.conf
 net.ipv4.ip_local_port_range = 1024 65000
 ```
+
+
+## Microbenchmark Instructions (temp)
+
+Not to confuse, I summarize how to microbenchmark.
+
+First of all, I tried to revise the old micro benchmark program that we ran
+a week ago and I have revised, but the results seem not quite impressive
+compared to before. So I decide to use old results.
+
+----
+
+Second, we need measure 1 block read / write speed.
+The code that I shared today is all about it.
+
+*1) Linux*
+https://github.com/MingiK1m/cs736_rwbm
+
+Build : use "make" command to build
+Usage: ./bm <write|read|remove> <block_size> <iter_count> <log_path>
+<on|off>(for fsync)
+
+Actual Steps for 4096 block size)
+1) ./bm write 4096 10000 wrt_log off
+2) [reboot]
+3) ./bm read 4096 10000 rd_log off
+4) ./bm remove 4096 10000 a off
+5) [reboot]
+6) ./bm write 4096 10000 wrt_fsync_log on
+7) ./bm remove 4096 10000 a on
+
+Output)
+wrt_log, rd_log, wrt_fsync_log
+
+Make sure that zfs and ext4 log file name is different. (to prevent
+overwriting/confusing)
+
+*2) Windows*
+https://github.com/MingiK1m/cs736_rwbm_windows
+
+Build : use "visual studio 2015" to build
+Usage : rw_benchmark.exe <write|read|remove> <block_size> <repeat_count>
+<log_filename> <on|off>(fsync)
+
+Actual Steps for 4096 block size)
+1) rw_benchmark.exe write 4096 10000 ntfs_wrt_log off
+2) [reboot]
+3) rw_benchmark.exe read 4096 10000 ntfs_rd_log on
+4) rw_benchmark.exe remove 4096 10000 a on
+5) [reboot]
+6) rw_benchmark.exe write 4096 10000 ntfs_wrt_fsync_log on
+7) rw_benchmark.exe remove 4096 10000 a on
+
+Output)
+ntfs_wrt_log, ntfs_rd_log, ntfs_wrt_fsync_log
+
+----
+
+Third, how to check block size
+
+1) Linux
+sudo blockdev --getbsz <partition>
+
+Output)
+mingi@mingi-Laptop:~$ sudo blockdev --getbsz /dev/sda3
+4096
+
+2) Windows
+fsutil fsinfo ntfsinfo c:
+
+Output)
+...
+*Bytes Per Sector  :                512*
+*Bytes Per Physical Sector :        4096*
+Bytes Per Cluster :                4096
+Bytes Per FileRecord Segment    :  1024
+...
