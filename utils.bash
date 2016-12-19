@@ -35,13 +35,13 @@ ext() {
 
   chown -R damouse:damouse /fsb
 
-  # systemctl stop postgresql
-  # cp -aRv /var/lib/postgresql /fsb
-  # mv /var/lib/postgresql /var/lib/postgresql.bak
-  # ln -s /fsb/postgresql /var/lib/postgresql
-  # chown postgres /var/lib/postgresql
-  # systemctl start postgresql
-  # systemctl restart apache2
+  systemctl stop postgresql
+  cp -aRv /var/lib/postgresql /fsb
+  mv /var/lib/postgresql /var/lib/postgresql.bak
+  ln -s /fsb/postgresql /var/lib/postgresql
+  chown postgres /var/lib/postgresql
+  systemctl start postgresql
+  systemctl restart apache2
 }
 
 reset() {

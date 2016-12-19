@@ -134,14 +134,37 @@ Build : use "make" command to build
 Usage: ./bm <write|read|remove> <block_size> <iter_count> <log_path>
 <on|off>(for fsync)
 
-Actual Steps for 4096 block size)
-1) ./bm write 4096 10000 wrt_log off
+1) ./bm write 8192 10000 wrt_log off
 2) [reboot]
-3) ./bm read 4096 10000 rd_log off
-4) ./bm remove 4096 10000 a off
+3) ./bm read 8192 10000 rd_log off
+4) ./bm remove 8192 10000 a off
 5) [reboot]
-6) ./bm write 4096 10000 wrt_fsync_log on
-7) ./bm remove 4096 10000 a on
+6) ./bm write 8192 10000 wrt_fsync_log on
+7) ./bm remove 8192 10000 a on
+
+1) ./bm write 16384 10000 wrt_log off
+2) [reboot]
+3) ./bm read 16384 10000 rd_log off
+4) ./bm remove 16384 10000 a off
+5) [reboot]
+6) ./bm write 16384 10000 wrt_fsync_log on
+7) ./bm remove 16384 10000 a on
+
+1) ./bm write 65536 10000 wrt_log off
+2) [reboot]
+3) ./bm read 65536 10000 rd_log off
+4) ./bm remove 65536 10000 a off
+5) [reboot]
+6) ./bm write 65536 10000 wrt_fsync_log on
+7) ./bm remove 65536 10000 a on
+
+1) ./bm write 131072 10000 wrt_log off
+2) [reboot]
+3) ./bm read 131072 10000 rd_log off
+4) ./bm remove 131072 10000 a off
+5) [reboot]
+6) ./bm write 131072 10000 wrt_fsync_log on
+7) ./bm remove 131072 10000 a on
 
 Output)
 wrt_log, rd_log, wrt_fsync_log
